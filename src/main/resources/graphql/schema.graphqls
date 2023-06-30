@@ -72,6 +72,14 @@ type RewardLogItem {
     """
     difference: Int!
     """
+    The old reward score.
+    """
+    oldValue: Int!
+    """
+    The new reward score.
+    """
+    newValue: Int!
+    """
     The reason why the reward score has changed.
     """
     reason: RewardChangeReason!
