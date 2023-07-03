@@ -1,0 +1,13 @@
+POST http://localhost:7001/content-service/resource-update-pubsub
+Content-Type: application/json
+
+{
+  "data": {
+    "userId": "a152c4ae-954d-4f59-9320-24c238e57be3",
+    "contentId": "c4ce2bee-5077-4f29-9c7c-c03604bc8c3a",
+    "success": true,
+    "correctness": 1.0,
+    "hintsUsed": 0,
+    "timeToComplete": null
+  }
+}

@@ -10,11 +10,11 @@ services:
     ports:
       - "7032:5432"
     volumes:
-      - templatedata:/var/lib/postgresql/data
+      - rewarddata:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=root
-      - POSTGRES_DB=templatedatabase
+      - POSTGRES_DB=reward_service
   app-reward:
     build:
       context: ./../reward_service # necessary because otherwise docker-compose overrides the context path when merging multiple docker-compose.yml files
