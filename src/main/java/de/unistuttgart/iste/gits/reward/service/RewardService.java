@@ -1,6 +1,7 @@
 package de.unistuttgart.iste.gits.reward.service;
 
 import de.unistuttgart.iste.gits.common.event.UserProgressLogEvent;
+import de.unistuttgart.iste.gits.generated.dto.Content;
 import de.unistuttgart.iste.gits.generated.dto.RewardScores;
 import de.unistuttgart.iste.gits.reward.persistence.dao.AllRewardScoresEntity;
 import de.unistuttgart.iste.gits.reward.persistence.dao.RewardScoreEntity;
@@ -42,7 +43,7 @@ public class RewardService {
 
         List<UUID> chapterIds = courseServiceClient.getChapterIds(courseId);
 
-        List<ContentWithUserProgressData> contents = contentServiceClient.getContentsWithUserProgressData(userId, chapterIds);
+        List<Content> contents = contentServiceClient.getContentsWithUserProgressData(userId, chapterIds);
 
         allRewardScoresEntity
                 .setHealth(new HealthScoreCalculator().recalculateScore(allRewardScoresEntity.getHealth(), contents));
@@ -68,6 +69,8 @@ public class RewardService {
      */
     @Scheduled(cron = "${reward.recalculation.cron}")
     public void recalculateAllScores() {
+        CourseServiceClient.clearCache();
+
         List<AllRewardScoresEntity> allRewardScoresEntities = rewardScoresRepository.findAll();
         for (AllRewardScoresEntity allRewardScoresEntity : allRewardScoresEntities) {
             try {
@@ -98,7 +101,7 @@ public class RewardService {
                 .orElseGet(() -> initializeRewardScores(courseId, event.getUserId()));
 
         List<UUID> chapterIds = courseServiceClient.getChapterIds(courseId);
-        List<ContentWithUserProgressData> contents
+        List<Content> contents
                 = contentServiceClient.getContentsWithUserProgressData(event.getUserId(), chapterIds);
 
         allRewardScoresEntity

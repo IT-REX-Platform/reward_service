@@ -1,10 +1,10 @@
 package de.unistuttgart.iste.gits.reward.service.calculation;
 
 import de.unistuttgart.iste.gits.common.event.UserProgressLogEvent;
+import de.unistuttgart.iste.gits.generated.dto.Content;
 import de.unistuttgart.iste.gits.generated.dto.RewardChangeReason;
 import de.unistuttgart.iste.gits.reward.persistence.dao.RewardScoreEntity;
 import de.unistuttgart.iste.gits.reward.persistence.dao.RewardScoreLogEntry;
-import de.unistuttgart.iste.gits.reward.service.ContentWithUserProgressData;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -20,11 +20,11 @@ public class HealthScoreCalculator implements ScoreCalculator {
 
     @Override
     public RewardScoreEntity recalculateScore(RewardScoreEntity rewardScore,
-                                              List<ContentWithUserProgressData> contents) {
+                                              List<Content> contents) {
         int oldScore = rewardScore.getValue();
         OffsetDateTime today = OffsetDateTime.now();
 
-        List<ContentWithUserProgressData> newDueContents = getDueContentsThatWereNeverWorked(contents, today);
+        List<Content> newDueContents = getDueContentsThatWereNeverWorked(contents, today);
 
         int diff = calculateHealthDecrease(newDueContents, today);
 
@@ -50,7 +50,7 @@ public class HealthScoreCalculator implements ScoreCalculator {
     @Override
     public RewardScoreEntity calculateOnContentWorkedOn(
             RewardScoreEntity rewardScore,
-            List<ContentWithUserProgressData> contents,
+            List<Content> contents,
             UserProgressLogEvent event) {
 
         int oldScore = rewardScore.getValue();
@@ -62,7 +62,7 @@ public class HealthScoreCalculator implements ScoreCalculator {
 
         OffsetDateTime today = OffsetDateTime.now();
 
-        List<ContentWithUserProgressData> newDueContents = getDueContentsThatWereNeverWorked(contents, today);
+        List<Content> newDueContents = getDueContentsThatWereNeverWorked(contents, today);
         int numberOfNewDueContentsBefore = newDueContents.size();
         // this list might or might not include the content that was just worked on
         // depending on if the content service has already processed the event or not
@@ -89,46 +89,55 @@ public class HealthScoreCalculator implements ScoreCalculator {
 
     }
 
-    private static boolean doesListContainContentWithId(List<ContentWithUserProgressData> newDueContents, UUID contentId) {
+    private static boolean doesListContainContentWithId(List<Content> newDueContents, UUID contentId) {
         return newDueContents.stream()
                 .anyMatch(content -> content.getId().equals(contentId));
     }
 
-    private static List<UUID> getIds(List<ContentWithUserProgressData> newDueContents) {
+    private static List<UUID> getIds(List<Content> newDueContents) {
         return newDueContents.stream()
-                .map(ContentWithUserProgressData::getId)
+                .map(Content::getId)
                 .toList();
     }
 
-    private int calculateHealthDecrease(List<ContentWithUserProgressData> newDueContents, OffsetDateTime today) {
+    /**
+     * Calculates the health decrease based on the number of days the content is overdue.
+     * The decrease is capped at {@link #HEALTH_DECREASE_CAP}.
+     *
+     * @param newDueContents the contents that are due but were never worked on
+     * @param today          the current date
+     * @return a negative(!) number representing the health decrease
+     */
+    private int calculateHealthDecrease(List<Content> newDueContents, OffsetDateTime today) {
         return (int) Math.max(HEALTH_DECREASE_CAP,
                 Math.floor(HEALTH_MODIFIER_PER_DAY * newDueContents.stream()
-                        .mapToInt(contentWithUserProgressData -> getDaysOverDue(contentWithUserProgressData, today))
+                        .mapToInt(content -> getDaysOverDue(content, today))
                         .map(days -> days + 1) // on the day it is due, it should count as 1 day overdue
+                        .map(days -> days * -1) // negative because it is a decrease
                         .sum()));
     }
 
-    private List<ContentWithUserProgressData> getDueContentsThatWereNeverWorked(List<ContentWithUserProgressData> contents, OffsetDateTime today) {
+    private List<Content> getDueContentsThatWereNeverWorked(List<Content> contents, OffsetDateTime today) {
         return contents.stream()
                 .filter(this::isContentNotWorkedOn)
-                .filter(contentWithUserProgressData -> isContentDue(contentWithUserProgressData, today))
+                .filter(content -> isContentDue(content, today))
                 .toList();
     }
 
-    private boolean isContentNotWorkedOn(ContentWithUserProgressData contentWithUserProgressData) {
-        return isEmpty(contentWithUserProgressData.getUserProgressData().getLog());
+    private boolean isContentNotWorkedOn(Content content) {
+        return isEmpty(content.getUserProgressData().getLog());
     }
 
-    private boolean isContentDue(ContentWithUserProgressData contentWithUserProgressData, OffsetDateTime today) {
-        OffsetDateTime dueDate = contentWithUserProgressData.getMetadata().getSuggestedDate();
+    private boolean isContentDue(Content content, OffsetDateTime today) {
+        OffsetDateTime dueDate = content.getMetadata().getSuggestedDate();
         return dueDate != null && dueDate.isBefore(today);
     }
 
-    private int getDaysOverDue(ContentWithUserProgressData contentWithUserProgressData, OffsetDateTime today) {
-        OffsetDateTime dueDate = contentWithUserProgressData.getMetadata().getSuggestedDate();
+    private int getDaysOverDue(Content content, OffsetDateTime today) {
+        OffsetDateTime dueDate = content.getMetadata().getSuggestedDate();
         if (dueDate == null) {
             return 0;
         }
-        return (int) Duration.between(today, dueDate).toDays();
+        return (int) Duration.between(today, dueDate).abs().toDays();
     }
 }
