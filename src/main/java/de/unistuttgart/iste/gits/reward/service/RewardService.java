@@ -29,6 +29,12 @@ public class RewardService {
     private final CourseServiceClient courseServiceClient;
     private final ContentServiceClient contentServiceClient;
 
+    private final HealthScoreCalculator healthScoreCalculator;
+    private final FitnessScoreCalculator fitnessScoreCalculator;
+    private final StrengthScoreCalculator strengthScoreCalculator;
+    private final PowerScoreCalculator powerScoreCalculator;
+    private final GrowthScoreCalculator growthScoreCalculator;
+
     /**
      * Recalculates the reward scores for a given user and course.
      *
@@ -46,15 +52,15 @@ public class RewardService {
         List<Content> contents = contentServiceClient.getContentsWithUserProgressData(userId, chapterIds);
 
         allRewardScoresEntity
-                .setHealth(new HealthScoreCalculator().recalculateScore(allRewardScoresEntity.getHealth(), contents));
+                .setHealth(healthScoreCalculator.recalculateScore(allRewardScoresEntity.getHealth(), contents));
         allRewardScoresEntity
-                .setFitness(new FitnessScoreCalculator().recalculateScore(allRewardScoresEntity.getFitness(), contents));
+                .setFitness(fitnessScoreCalculator.recalculateScore(allRewardScoresEntity.getFitness(), contents));
         allRewardScoresEntity
-                .setStrength(new StrengthScoreCalculator().recalculateScore(allRewardScoresEntity.getStrength(), contents));
+                .setStrength(strengthScoreCalculator.recalculateScore(allRewardScoresEntity.getStrength(), contents));
         allRewardScoresEntity
-                .setPower(new PowerScoreCalculator().recalculateScore(allRewardScoresEntity.getPower(), contents));
+                .setPower(powerScoreCalculator.recalculateScore(allRewardScoresEntity.getPower(), contents));
         allRewardScoresEntity
-                .setGrowth(new GrowthScoreCalculator().recalculateScore(allRewardScoresEntity.getGrowth(), contents));
+                .setGrowth(growthScoreCalculator.recalculateScore(allRewardScoresEntity.getGrowth(), contents));
 
         var result = rewardScoresRepository.save(allRewardScoresEntity);
 
@@ -104,21 +110,16 @@ public class RewardService {
         List<Content> contents
                 = contentServiceClient.getContentsWithUserProgressData(event.getUserId(), chapterIds);
 
-        allRewardScoresEntity
-                .setHealth(new HealthScoreCalculator()
-                        .calculateOnContentWorkedOn(allRewardScoresEntity.getHealth(), contents, event));
-        allRewardScoresEntity
-                .setFitness(new FitnessScoreCalculator()
-                        .calculateOnContentWorkedOn(allRewardScoresEntity.getFitness(), contents, event));
-        allRewardScoresEntity
-                .setStrength(new StrengthScoreCalculator()
-                        .calculateOnContentWorkedOn(allRewardScoresEntity.getStrength(), contents, event));
-        allRewardScoresEntity
-                .setPower(new PowerScoreCalculator()
-                        .calculateOnContentWorkedOn(allRewardScoresEntity.getPower(), contents, event));
-        allRewardScoresEntity
-                .setGrowth(new GrowthScoreCalculator()
-                        .calculateOnContentWorkedOn(allRewardScoresEntity.getGrowth(), contents, event));
+        allRewardScoresEntity.setHealth(healthScoreCalculator
+                .calculateOnContentWorkedOn(allRewardScoresEntity.getHealth(), contents, event));
+        allRewardScoresEntity.setFitness(fitnessScoreCalculator
+                .calculateOnContentWorkedOn(allRewardScoresEntity.getFitness(), contents, event));
+        allRewardScoresEntity.setStrength(strengthScoreCalculator
+                .calculateOnContentWorkedOn(allRewardScoresEntity.getStrength(), contents, event));
+        allRewardScoresEntity.setPower(powerScoreCalculator
+                .calculateOnContentWorkedOn(allRewardScoresEntity.getPower(), contents, event));
+        allRewardScoresEntity.setGrowth(growthScoreCalculator
+                .calculateOnContentWorkedOn(allRewardScoresEntity.getGrowth(), contents, event));
 
         allRewardScoresEntity = rewardScoresRepository.save(allRewardScoresEntity);
 

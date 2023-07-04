@@ -5,6 +5,7 @@ import de.unistuttgart.iste.gits.generated.dto.Content;
 import de.unistuttgart.iste.gits.generated.dto.RewardChangeReason;
 import de.unistuttgart.iste.gits.reward.persistence.dao.RewardScoreEntity;
 import de.unistuttgart.iste.gits.reward.persistence.dao.RewardScoreLogEntry;
+import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -13,6 +14,7 @@ import java.util.UUID;
 
 import static org.springframework.util.CollectionUtils.isEmpty;
 
+@Component
 public class HealthScoreCalculator implements ScoreCalculator {
 
     public static final double HEALTH_MODIFIER_PER_DAY = 0.5;
