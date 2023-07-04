@@ -25,8 +25,13 @@ public class RewardController {
         return rewardService.getRewardScores(courseId, currentUser.getId());
     }
 
+    @QueryMapping
+    public RewardScores courseRewardScoresForUser(@Argument UUID courseId, @Argument UUID userId) {
+        return rewardService.getRewardScores(courseId, userId);
+    }
+
     @MutationMapping
-    public RewardScores courseRecalculateScoresForUser(@Argument UUID courseId, @Argument UUID userId) {
+    public RewardScores recalculateScores(@Argument UUID courseId, @Argument UUID userId) {
         return rewardService.recalculateScores(courseId, userId);
     }
 }
