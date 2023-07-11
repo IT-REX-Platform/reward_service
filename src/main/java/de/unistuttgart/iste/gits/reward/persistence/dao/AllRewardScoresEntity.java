@@ -34,7 +34,7 @@ public class AllRewardScoresEntity {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class PrimaryKey implements Serializable {
-        private UUID userId;
         private UUID courseId;
+        private UUID userId;
     }
 }
