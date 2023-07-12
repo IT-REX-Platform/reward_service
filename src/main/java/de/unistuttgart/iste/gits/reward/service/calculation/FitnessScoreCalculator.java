@@ -2,18 +2,17 @@ package de.unistuttgart.iste.gits.reward.service.calculation;
 
 import de.unistuttgart.iste.gits.common.event.UserProgressLogEvent;
 import de.unistuttgart.iste.gits.generated.dto.Content;
+import de.unistuttgart.iste.gits.generated.dto.RewardChangeReason;
 import de.unistuttgart.iste.gits.reward.persistence.dao.AllRewardScoresEntity;
 import de.unistuttgart.iste.gits.reward.persistence.dao.RewardScoreEntity;
+import de.unistuttgart.iste.gits.reward.persistence.dao.RewardScoreLogEntry;
 import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
 
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.List;
-
-
-
-
 @Component
 public class FitnessScoreCalculator implements ScoreCalculator {
     private static final double MAX_DECREASE_PER_DAY = 0.2;
@@ -23,19 +22,21 @@ public class FitnessScoreCalculator implements ScoreCalculator {
         RewardScoreEntity fitnessScoreBefore = allRewardScores.getFitness();
 
         UserProgressLogEvent event = UserProgressLogEvent.builder().build();
-        //OffsetDateTime today = OffsetDateTime.now();
+
         double fitnessDecrease = calculateFitnessDecrease(contents,event);
         double newFitnessScore = fitnessScoreBefore.getValue() * (1 - fitnessDecrease);
         int IntnewFitnessScore= (int) Math.round(newFitnessScore);
-        /*RewardScoreLogEntry logEntry = RewardScoreLogEntry.builder()
-                .date(today)
+        RewardScoreLogEntry logEntry = RewardScoreLogEntry.builder()
+               .date(OffsetDateTime.now())
+                .difference(fitnessScoreBefore.getValue() - IntnewFitnessScore)
+                .oldValue(fitnessScoreBefore.getValue())
+                .newValue(IntnewFitnessScore)
                 .reason(RewardChangeReason.CONTENT_DUE_FOR_LEARNING)
-                .build();*/
-
-
+                .associatedContentIds(Collections.emptyList())
+                .build();
 
         fitnessScoreBefore.setValue(IntnewFitnessScore);
-        //fitnessScoreBefore.getLog().add(logEntry);
+        fitnessScoreBefore.getLog().add(logEntry);
 
         return fitnessScoreBefore;
     }
@@ -47,7 +48,17 @@ public class FitnessScoreCalculator implements ScoreCalculator {
         double fitnessDecrease = calculateFitnessDecrease(contents,event);
         double newFitnessScore = fitnessScoreBefore.getValue() * (1 - fitnessDecrease);
         int IntnewFitnessScore= (int) Math.round(newFitnessScore);
+        RewardScoreLogEntry logEntry = RewardScoreLogEntry.builder()
+                .date(OffsetDateTime.now())
+                .difference(fitnessScoreBefore.getValue() - IntnewFitnessScore)
+                .oldValue(fitnessScoreBefore.getValue())
+                .newValue(IntnewFitnessScore)
+                .reason(RewardChangeReason.CONTENT_DONE)
+                .associatedContentIds(Collections.emptyList())
+                .build();
+
         fitnessScoreBefore.setValue(IntnewFitnessScore);
+        fitnessScoreBefore.getLog().add(logEntry);
 
         return fitnessScoreBefore;
     }
@@ -59,21 +70,16 @@ public class FitnessScoreCalculator implements ScoreCalculator {
             if (isDueForRepetition(content)) {
                 int daysOverdue = calculateDaysOverdue(content);
                 double correctness = calculateCorrectness(event);
-
                 double decreasePerDay = 1 + (2 * daysOverdue * (1 - Math.pow(correctness, 2)));
                 fitnessDecrease += decreasePerDay;
             }
         }
-
         return Math.min(MAX_DECREASE_PER_DAY, fitnessDecrease);
     }
 
     private boolean isDueForRepetition(Content content) {
         // Implement the logic to determine if the content is due for repetition
         // Return true if it is due, false otherwise
-
-
-        //LocalDate currentDate = LocalDate.now();
         OffsetDateTime today = OffsetDateTime.now();
         OffsetDateTime repetitionDate = content.getMetadata().getSuggestedDate();
 
@@ -82,20 +88,8 @@ public class FitnessScoreCalculator implements ScoreCalculator {
 
         return isDueForRepetition;
     }
-
-
-    /*private int calculateDaysOverdue(Content content, OffsetDateTime today) {
-        // Implement the logic to calculate the number of days the content is overdue for repetition
-        // Return the number of days overdue
-            OffsetDateTime dueDate = content.getMetadata().getSuggestedDate();
-            if (dueDate == null) {
-                return 0;
-            }
-            return (int) Duration.between(today, dueDate).abs().toDays();
-
-    }*/
     private int calculateDaysOverdue(Content content) {
-        //LocalDate currentDate = LocalDate.now();
+
         OffsetDateTime today = OffsetDateTime.now();
         OffsetDateTime repetitionDate = content.getMetadata().getSuggestedDate();
 
@@ -107,7 +101,6 @@ public class FitnessScoreCalculator implements ScoreCalculator {
 
         return daysOverdue;
     }
-
     private double calculateCorrectness(UserProgressLogEvent event) {
         // Implement the logic to calculate the correctness of the content
         // Return the correctness value between 0 and 1
