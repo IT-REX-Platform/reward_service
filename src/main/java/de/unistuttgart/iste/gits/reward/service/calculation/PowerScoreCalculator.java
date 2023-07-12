@@ -14,53 +14,34 @@ import java.util.List;
 public class PowerScoreCalculator implements ScoreCalculator {
 
     public static final double HEALTH_FITNESS_MULTIPLIER = 0.1;
+
     @Override
     public RewardScoreEntity recalculateScore(AllRewardScoresEntity allRewardScores, List<Content> contents) {
+        RewardScoreEntity power = calculatePowerScore(allRewardScores);
+        return power;
+    }
 
+    @Override
+    public RewardScoreEntity calculateOnContentWorkedOn(AllRewardScoresEntity allRewardScores, List<Content> contents, UserProgressLogEvent event) {
+        RewardScoreEntity power = calculatePowerScore(allRewardScores);
+        return power;
+    }
+
+    private RewardScoreEntity calculatePowerScore(AllRewardScoresEntity allRewardScores) {
         RewardScoreEntity growth = allRewardScores.getGrowth();
         RewardScoreEntity strength = allRewardScores.getStrength();
         RewardScoreEntity health = allRewardScores.getHealth();
         RewardScoreEntity fitness = allRewardScores.getFitness();
         RewardScoreEntity power = allRewardScores.getPower();
 
-
         double powerValueDouble = (growth.getValue() + strength.getValue()) + HEALTH_FITNESS_MULTIPLIER * (health.getValue() + fitness.getValue()) * (growth.getValue() + strength.getValue());
         int powerValueInt = (int) Math.round(powerValueDouble);
-
         RewardScoreLogEntry logEntry = RewardScoreLogEntry.builder()
-
                 .reason(RewardChangeReason.COMPOSITE_VALUE)
                 .build();
 
         power.setValue(powerValueInt);
         power.getLog().add(logEntry);
-
-        return power;
-
-    }
-
-    @Override
-    public RewardScoreEntity calculateOnContentWorkedOn(AllRewardScoresEntity allRewardScores, List<Content> contents, UserProgressLogEvent event) {
-
-
-        RewardScoreEntity growth = allRewardScores.getGrowth();
-        RewardScoreEntity strength = allRewardScores.getStrength();
-        RewardScoreEntity health = allRewardScores.getHealth();
-        RewardScoreEntity fitness = allRewardScores.getFitness();
-        RewardScoreEntity power = allRewardScores.getPower();
-
-
-        double powerValueDouble = (growth.getValue() + strength.getValue()) + HEALTH_FITNESS_MULTIPLIER * (health.getValue() + fitness.getValue()) * (growth.getValue() + strength.getValue());
-        int powerValueInt = (int) Math.round(powerValueDouble);
-        RewardScoreLogEntry logEntry = RewardScoreLogEntry.builder()
-
-                .reason(RewardChangeReason.DONE_VALUE)
-                .build();
-
-        power.setValue(powerValueInt);
-        power.getLog().add(logEntry);
-
-
 
         return power;
     }

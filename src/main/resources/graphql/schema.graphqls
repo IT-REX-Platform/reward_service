@@ -118,5 +118,5 @@ enum RewardChangeReason {
     """
     CONTENT_DUE_FOR_REPETITION,
     COMPOSITE_VALUE,
-    DONE_VALUE,
+
 }
