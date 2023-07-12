@@ -8,6 +8,8 @@ import de.unistuttgart.iste.gits.reward.persistence.dao.RewardScoreEntity;
 import de.unistuttgart.iste.gits.reward.persistence.dao.RewardScoreLogEntry;
 import org.springframework.stereotype.Component;
 
+import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -37,7 +39,12 @@ public class PowerScoreCalculator implements ScoreCalculator {
         double powerValueDouble = (growth.getValue() + strength.getValue()) + HEALTH_FITNESS_MULTIPLIER * (health.getValue() + fitness.getValue()) * (growth.getValue() + strength.getValue());
         int powerValueInt = (int) Math.round(powerValueDouble);
         RewardScoreLogEntry logEntry = RewardScoreLogEntry.builder()
+                .date(OffsetDateTime.now())
+                .difference(powerValueInt - power.getValue())
+                .oldValue(power.getValue())
+                .newValue(powerValueInt)
                 .reason(RewardChangeReason.COMPOSITE_VALUE)
+                .associatedContentIds(Collections.emptyList())
                 .build();
 
         power.setValue(powerValueInt);
