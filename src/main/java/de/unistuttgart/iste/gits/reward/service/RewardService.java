@@ -143,6 +143,12 @@ public class RewardService {
         return rewardScoreEntity;
     }
 
+
+    /**
+     * Returns the scoreboard for a specific course. Sorted by power from highest to lowest.
+     * @param courseId of the course for which the scoreboard should be retrieved
+     * @return scoreboard
+     */
     public List<ScoreboardItem> getScoreboard(UUID courseId) {
         List<AllRewardScoresEntity> allRewardScoresEntity = rewardScoresRepository.findAllRewardScoresEntitiesById_CourseId(courseId);
         List<ScoreboardItem> scoreboard = new ArrayList<>();
