@@ -31,7 +31,7 @@ public class GrowthScoreCalculator implements ScoreCalculator {
         }
 
         RewardScoreLogEntry logEntry = RewardScoreLogEntry.builder()
-                        .date(OffsetDateTime.now())
+                .date(OffsetDateTime.now())
                 .difference(diff)
                 .newValue(currentScore)
                 .oldValue(oldScore)

@@ -16,7 +16,6 @@ public class GrowthScoreTest {
     private final GrowthScoreCalculator growthScoreCalculator = new GrowthScoreCalculator();
 
 
-
     @Test
     void testGrowthScoreCalculation() {
         //arrange
