@@ -25,7 +25,8 @@ public class RewardScoreEntity {
     private int value;
 
     @Column(nullable = false)
-    private float percentage = 0;
+    @Builder.Default
+    private float percentage = 0f;
 
     @OneToMany(cascade = CascadeType.ALL)
     @OrderBy("date DESC")
