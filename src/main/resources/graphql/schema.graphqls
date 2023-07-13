@@ -121,6 +121,7 @@ enum RewardChangeReason {
     The associated contents are the content that are due for repetition.
     """
     CONTENT_DUE_FOR_REPETITION,
+    COMPOSITE_VALUE,
 }
 
 """
