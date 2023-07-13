@@ -150,10 +150,10 @@ public class RewardService {
      * @return scoreboard
      */
     public List<ScoreboardItem> getScoreboard(UUID courseId) {
-        List<AllRewardScoresEntity> allRewardScoresEntity = rewardScoresRepository.findAllRewardScoresEntitiesById_CourseId(courseId);
+        List<AllRewardScoresEntity> courseRewardScoreEntities = rewardScoresRepository.findAllRewardScoresEntitiesById_CourseId(courseId);
         List<ScoreboardItem> scoreboard = new ArrayList<>();
 
-        for (var rewardScore : allRewardScoresEntity) {
+        for (var rewardScore : courseRewardScoreEntities) {
             ScoreboardItem scoreboardItem = new ScoreboardItem(rewardScore.getId().getUserId(), rewardScore.getPower().getValue());
             scoreboard.add(scoreboardItem);
         }
