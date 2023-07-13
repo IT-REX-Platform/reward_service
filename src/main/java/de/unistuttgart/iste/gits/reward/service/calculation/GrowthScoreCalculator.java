@@ -3,11 +3,14 @@ package de.unistuttgart.iste.gits.reward.service.calculation;
 import de.unistuttgart.iste.gits.common.event.UserProgressLogEvent;
 import de.unistuttgart.iste.gits.generated.dto.Content;
 import de.unistuttgart.iste.gits.generated.dto.ProgressLogItem;
+import de.unistuttgart.iste.gits.generated.dto.RewardChangeReason;
 import de.unistuttgart.iste.gits.generated.dto.UserProgressData;
 import de.unistuttgart.iste.gits.reward.persistence.dao.AllRewardScoresEntity;
 import de.unistuttgart.iste.gits.reward.persistence.dao.RewardScoreEntity;
+import de.unistuttgart.iste.gits.reward.persistence.dao.RewardScoreLogEntry;
 import org.springframework.stereotype.Component;
 
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -16,26 +19,60 @@ import java.util.List;
 public class GrowthScoreCalculator implements ScoreCalculator {
     @Override
     public RewardScoreEntity recalculateScore(AllRewardScoresEntity allRewardScores, List<Content> contents) {
-        RewardScoreEntity growthScoreBefore = allRewardScores.getGrowth();
-
+        RewardScoreEntity growthScore = allRewardScores.getGrowth();
         int currentScore = getCurrentScore(contents);
         int totalScore = getTotalScore(contents);
-        growthScoreBefore.setValue(currentScore);
-        growthScoreBefore.setPercentage(calculatePercentage(currentScore, totalScore));
+        int oldScore = growthScore.getValue();
 
-        return growthScoreBefore;
+        int diff = currentScore - oldScore;
+
+        if (diff == 0) {
+            return growthScore;
+        }
+
+        RewardScoreLogEntry logEntry = RewardScoreLogEntry.builder()
+                        .date(OffsetDateTime.now())
+                .difference(diff)
+                .newValue(currentScore)
+                .oldValue(oldScore)
+                .reason(RewardChangeReason.CONTENT_DONE)
+                .build();
+
+        growthScore.setValue(currentScore);
+        growthScore.setPercentage(calculatePercentage(currentScore, totalScore));
+        growthScore.getLog().add(logEntry);
+
+        return growthScore;
     }
 
     @Override
     public RewardScoreEntity calculateOnContentWorkedOn(AllRewardScoresEntity allRewardScores, List<Content> contents, UserProgressLogEvent event) {
-        RewardScoreEntity growthScoreBefore = allRewardScores.getGrowth();
-
+        RewardScoreEntity growthScore = allRewardScores.getGrowth();
+        int oldScore = growthScore.getValue();
         int currentScore = getCurrentScore(contents);
         int totalScore = getTotalScore(contents);
-        growthScoreBefore.setValue(currentScore);
-        growthScoreBefore.setPercentage(calculatePercentage(currentScore, totalScore));
 
-        return growthScoreBefore;
+        int diff = currentScore - oldScore;
+
+        if (diff == 0) {
+            return growthScore;
+        }
+
+        RewardScoreLogEntry logEntry = RewardScoreLogEntry.builder()
+                .date(OffsetDateTime.now())
+                .difference(diff)
+                .newValue(currentScore)
+                .oldValue(oldScore)
+                .reason(RewardChangeReason.CONTENT_DONE)
+                .associatedContentIds(List.of(event.getContentId()))
+                .build();
+
+
+        growthScore.setValue(currentScore);
+        growthScore.setPercentage(calculatePercentage(currentScore, totalScore));
+        growthScore.getLog().add(logEntry);
+
+        return growthScore;
     }
 
     private float calculatePercentage(int currentScore, int totalScore) {
