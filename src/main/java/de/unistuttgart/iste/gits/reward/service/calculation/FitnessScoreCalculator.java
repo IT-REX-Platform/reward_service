@@ -15,7 +15,7 @@ import java.util.Collections;
 import java.util.List;
 @Component
 public class FitnessScoreCalculator implements ScoreCalculator {
-    private static final double MAX_DECREASE_PER_DAY = 0.2;
+    private static final double MAX_DECREASE_PER_DAY = 20;
 
     @Override
     public RewardScoreEntity recalculateScore(AllRewardScoresEntity allRewardScores, List<Content> contents) {
@@ -25,17 +25,17 @@ public class FitnessScoreCalculator implements ScoreCalculator {
 
         double fitnessDecrease = calculateFitnessDecrease(contents,event);
         double newFitnessScore = fitnessScoreBefore.getValue() * (1 - fitnessDecrease);
-        int IntnewFitnessScore= (int) Math.round(newFitnessScore);
+        int intnewFitnessScore= (int) Math.round(newFitnessScore);
         RewardScoreLogEntry logEntry = RewardScoreLogEntry.builder()
                .date(OffsetDateTime.now())
-                .difference(fitnessScoreBefore.getValue() - IntnewFitnessScore)
+                .difference(fitnessScoreBefore.getValue() - intnewFitnessScore)
                 .oldValue(fitnessScoreBefore.getValue())
-                .newValue(IntnewFitnessScore)
+                .newValue(intnewFitnessScore)
                 .reason(RewardChangeReason.CONTENT_DUE_FOR_LEARNING)
                 .associatedContentIds(Collections.emptyList())
                 .build();
 
-        fitnessScoreBefore.setValue(IntnewFitnessScore);
+        fitnessScoreBefore.setValue(intnewFitnessScore);
         fitnessScoreBefore.getLog().add(logEntry);
 
         return fitnessScoreBefore;
@@ -45,23 +45,29 @@ public class FitnessScoreCalculator implements ScoreCalculator {
     public RewardScoreEntity calculateOnContentWorkedOn(AllRewardScoresEntity allRewardScores, List<Content> contents, UserProgressLogEvent event) {
         RewardScoreEntity fitnessScoreBefore = allRewardScores.getFitness();
 
-        double fitnessDecrease = calculateFitnessDecrease(contents,event);
+        double fitnessDecrease = calculateFitnessDecrease(contents, event);
         double newFitnessScore = fitnessScoreBefore.getValue() * (1 - fitnessDecrease);
-        int IntnewFitnessScore= (int) Math.round(newFitnessScore);
+        int newFitnessScoreInt = (int) Math.round(newFitnessScore);
+
+        // Decrease the fitness score
+        int fitnessDecreaseValue = fitnessScoreBefore.getValue() - newFitnessScoreInt;
+        int updatedFitnessScore = fitnessScoreBefore.getValue() - fitnessDecreaseValue;
+
         RewardScoreLogEntry logEntry = RewardScoreLogEntry.builder()
                 .date(OffsetDateTime.now())
-                .difference(fitnessScoreBefore.getValue() - IntnewFitnessScore)
+                .difference(fitnessDecreaseValue)
                 .oldValue(fitnessScoreBefore.getValue())
-                .newValue(IntnewFitnessScore)
+                .newValue(updatedFitnessScore)
                 .reason(RewardChangeReason.CONTENT_DONE)
                 .associatedContentIds(Collections.emptyList())
                 .build();
 
-        fitnessScoreBefore.setValue(IntnewFitnessScore);
+        fitnessScoreBefore.setValue(updatedFitnessScore);
         fitnessScoreBefore.getLog().add(logEntry);
 
         return fitnessScoreBefore;
     }
+
 
     private double calculateFitnessDecrease(List<Content> contents, UserProgressLogEvent event) {
         double fitnessDecrease = 0.0;
@@ -69,19 +75,18 @@ public class FitnessScoreCalculator implements ScoreCalculator {
         for (Content content : contents) {
             if (isDueForRepetition(content)) {
                 int daysOverdue = calculateDaysOverdue(content);
-                double correctness = calculateCorrectness(event);
-                double decreasePerDay = 1 + (2 * daysOverdue * (1 - Math.pow(correctness, 2)));
+                double correctness = calculateCorrectnessModifier(event);
+                double decreasePerDay = 1 + (2 * daysOverdue * (1 - correctness));
                 fitnessDecrease += decreasePerDay;
             }
         }
         return Math.min(MAX_DECREASE_PER_DAY, fitnessDecrease);
     }
-
     private boolean isDueForRepetition(Content content) {
         // Implement the logic to determine if the content is due for repetition
         // Return true if it is due, false otherwise
         OffsetDateTime today = OffsetDateTime.now();
-        OffsetDateTime repetitionDate = content.getMetadata().getSuggestedDate();
+        OffsetDateTime repetitionDate = content.getUserProgressData().getLastLearnDate();
 
         // Check if the repetition date is today or in the past
         boolean isDueForRepetition = repetitionDate.isBefore(today) || repetitionDate.isEqual(today);
@@ -101,7 +106,7 @@ public class FitnessScoreCalculator implements ScoreCalculator {
 
         return daysOverdue;
     }
-    private double calculateCorrectness(UserProgressLogEvent event) {
+    private double calculateCorrectnessModifier(UserProgressLogEvent event) {
         // Implement the logic to calculate the correctness of the content
         // Return the correctness value between 0 and 1
 
