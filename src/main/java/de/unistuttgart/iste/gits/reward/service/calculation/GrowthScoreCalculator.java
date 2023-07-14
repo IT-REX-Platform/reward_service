@@ -20,27 +20,6 @@ public class GrowthScoreCalculator implements ScoreCalculator {
     @Override
     public RewardScoreEntity recalculateScore(AllRewardScoresEntity allRewardScores, List<Content> contents) {
         RewardScoreEntity growthScore = allRewardScores.getGrowth();
-        int currentScore = getCurrentScore(contents);
-        int totalScore = getTotalScore(contents);
-        int oldScore = growthScore.getValue();
-
-        int diff = currentScore - oldScore;
-
-        if (diff == 0) {
-            return growthScore;
-        }
-
-        RewardScoreLogEntry logEntry = RewardScoreLogEntry.builder()
-                .date(OffsetDateTime.now())
-                .difference(diff)
-                .newValue(currentScore)
-                .oldValue(oldScore)
-                .reason(RewardChangeReason.CONTENT_DONE)
-                .build();
-
-        growthScore.setValue(currentScore);
-        growthScore.setPercentage(calculatePercentage(currentScore, totalScore));
-        growthScore.getLog().add(logEntry);
 
         return growthScore;
     }
@@ -93,7 +72,6 @@ public class GrowthScoreCalculator implements ScoreCalculator {
     }
 
     private boolean contentCompletedSuccessfully(UserProgressData userProgressData) {
-        ProgressLogItem newestLog = Collections.max(userProgressData.getLog(), Comparator.comparing(ProgressLogItem::getTimestamp));
-        return newestLog.getSuccess();
+        return userProgressData.getLog().stream().anyMatch(ProgressLogItem::getSuccess);
     }
 }
