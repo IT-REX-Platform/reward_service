@@ -9,7 +9,6 @@ import de.unistuttgart.iste.gits.reward.persistence.dao.RewardScoreLogEntry;
 import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
-
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
@@ -23,11 +22,17 @@ public class FitnessScoreCalculator implements ScoreCalculator {
 
         UserProgressLogEvent event = UserProgressLogEvent.builder().build();
 
-        double fitnessDecrease = calculateFitnessDecrease(contents,event);
+        double fitnessDecrease = calculateFitnessDecrease(contents, event);
+
+        if (fitnessDecrease == 0) {
+            return fitnessScoreBefore;
+        }
+
         double newFitnessScore = fitnessScoreBefore.getValue() * (1 - fitnessDecrease);
-        int intnewFitnessScore= (int) Math.round(newFitnessScore);
+
+        int intnewFitnessScore = (int) Math.round(newFitnessScore);
         RewardScoreLogEntry logEntry = RewardScoreLogEntry.builder()
-               .date(OffsetDateTime.now())
+                .date(OffsetDateTime.now())
                 .difference(fitnessScoreBefore.getValue() - intnewFitnessScore)
                 .oldValue(fitnessScoreBefore.getValue())
                 .newValue(intnewFitnessScore)
@@ -46,6 +51,11 @@ public class FitnessScoreCalculator implements ScoreCalculator {
         RewardScoreEntity fitnessScoreBefore = allRewardScores.getFitness();
 
         double fitnessDecrease = calculateFitnessDecrease(contents, event);
+
+        if (fitnessDecrease == 0) {
+            return fitnessScoreBefore;
+        }
+
         double newFitnessScore = fitnessScoreBefore.getValue() * (1 - fitnessDecrease);
         int newFitnessScoreInt = (int) Math.round(newFitnessScore);
 
@@ -86,7 +96,7 @@ public class FitnessScoreCalculator implements ScoreCalculator {
         // Implement the logic to determine if the content is due for repetition
         // Return true if it is due, false otherwise
         OffsetDateTime today = OffsetDateTime.now();
-        OffsetDateTime repetitionDate = content.getUserProgressData().getLastLearnDate();
+        OffsetDateTime repetitionDate = content.getUserProgressData().getNextLearnDate();
 
         // Check if the repetition date is today or in the past
         boolean isDueForRepetition = repetitionDate.isBefore(today) || repetitionDate.isEqual(today);
@@ -96,7 +106,7 @@ public class FitnessScoreCalculator implements ScoreCalculator {
     private int calculateDaysOverdue(Content content) {
 
         OffsetDateTime today = OffsetDateTime.now();
-        OffsetDateTime repetitionDate = content.getMetadata().getSuggestedDate();
+        OffsetDateTime repetitionDate = content.getUserProgressData().getNextLearnDate();
 
         // Calculate the number of days between the current date and the repetition date
         long daysBetween = ChronoUnit.DAYS.between(repetitionDate, today);
@@ -107,14 +117,7 @@ public class FitnessScoreCalculator implements ScoreCalculator {
         return daysOverdue;
     }
     private double calculateCorrectnessModifier(UserProgressLogEvent event) {
-        // Implement the logic to calculate the correctness of the content
-        // Return the correctness value between 0 and 1
-
-        double correctness = event.getCorrectness();
-
         // Square the correctness value to make the decrease more significant for low correctness
-        double squaredCorrectness = Math.pow(correctness, 2);
-
-        return squaredCorrectness;
+        return Math.pow(event.getCorrectness(), 2);
     }
 }
