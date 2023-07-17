@@ -32,18 +32,17 @@ class FitnessScoreCalculatorTest {
         AllRewardScoresEntity allRewardScores = createAllRewardScoresEntityWithFitnessOf(100);
         UUID contentId = UUID.randomUUID();
         List<Content> contents = List.of(
-                createContentWithUserData(
-                        UserProgressData.builder()
-                                .setNextLearnDate(OffsetDateTime.now())
-                                .setLog(List.of(
-                                        ProgressLogItem.builder()
-                                                .setTimestamp(OffsetDateTime.now())
-                                                .setCorrectness(1)
-                                                .setSuccess(true)
-                                                .setHintsUsed(0)
-                                                .build()
-                                ))
-                                .build())
+                createContentWithUserData(contentId, UserProgressData.builder()
+                        .setNextLearnDate(OffsetDateTime.now())
+                        .setLog(List.of(
+                                ProgressLogItem.builder()
+                                        .setTimestamp(OffsetDateTime.now())
+                                        .setCorrectness(1)
+                                        .setSuccess(true)
+                                        .setHintsUsed(0)
+                                        .build()
+                        ))
+                        .build())
         );
 
         RewardScoreEntity fitness = fitnessScoreCalculator.recalculateScore(allRewardScores, contents);
@@ -69,7 +68,7 @@ class FitnessScoreCalculatorTest {
         AllRewardScoresEntity allRewardScores = createAllRewardScoresEntityWithFitnessOf(100);
         UUID contentId = UUID.randomUUID();
         List<Content> contents = Collections.nCopies(5,
-                createContentWithUserData(
+                createContentWithUserData(contentId,
                         UserProgressData.builder()
                                 .setNextLearnDate(OffsetDateTime.now().minusDays(10))
                                 .setLog(List.of(
@@ -91,8 +90,9 @@ class FitnessScoreCalculatorTest {
         RewardScoreLogEntry logEntry = fitness.getLog().get(0);
         assertThat(logEntry.getDifference(), is(-16));
         assertThat(logEntry.getReason(), is(RewardChangeReason.CONTENT_DUE_FOR_REPETITION));
-        assertThat(logEntry.getAssociatedContentIds(), contains(contentId));
-        assertThat(logEntry.getOldValue(), is(99));
+        assertThat(logEntry.getAssociatedContentIds(), hasItem(contentId));
+        assertThat(logEntry.getAssociatedContentIds(), hasSize(5));
+        assertThat(logEntry.getOldValue(), is(100));
         assertThat(logEntry.getNewValue(), is(84));
     }
 
@@ -217,7 +217,6 @@ class FitnessScoreCalculatorTest {
                         .build()),
                 createContentWithUserData(
                         UserProgressData.builder()
-                                .setNextLearnDate(OffsetDateTime.now().minusDays(3))
                                 .setLog(List.of(ProgressLogItem.builder()
                                         .setTimestamp(OffsetDateTime.now().minusDays(3))
                                         .setCorrectness(0)
@@ -332,9 +331,13 @@ class FitnessScoreCalculatorTest {
         AllRewardScoresEntity allRewardScores = createAllRewardScoresEntityWithFitnessOf(50);
         UUID contentId = UUID.randomUUID();
         List<Content> contents = List.of(
+                // one content that was learned 10 minutes ago
                 createContentWithUserData(contentId, UserProgressData.builder()
                         .setNextLearnDate(OffsetDateTime.now().minusDays(1))
-                        .setLog(logWithOneSuccessfulEntry()) // learned successfully
+                        .setLog(List.of(ProgressLogItem.builder()
+                                .setTimestamp(OffsetDateTime.now().minusMinutes(10))
+                                .setSuccess(true)
+                                .build()))
                         .build()),
                 createContentWithUserData(UserProgressData.builder()
                         .setNextLearnDate(OffsetDateTime.now().minusDays(1))
@@ -351,15 +354,8 @@ class FitnessScoreCalculatorTest {
 
         RewardScoreEntity fitness = fitnessScoreCalculator.calculateOnContentWorkedOn(allRewardScores, contents, event);
 
-        assertThat(fitness.getValue(), is(75));
-        assertThat(fitness.getLog(), hasSize(1));
-
-        // repeat the same event to simulate a second repetition
-
-        fitness = fitnessScoreCalculator.calculateOnContentWorkedOn(allRewardScores, contents, event);
-
-        assertThat(fitness.getValue(), is(75));
-        assertThat(fitness.getLog(), hasSize(1));
+        assertThat(fitness.getValue(), is(50));
+        assertThat(fitness.getLog(), is(empty()));
     }
 
     /**
@@ -376,7 +372,7 @@ class FitnessScoreCalculatorTest {
                         .setNextLearnDate(OffsetDateTime.now().minusDays(1))
                         .setLog(List.of(
                                 ProgressLogItem.builder()
-                                        .setTimestamp(OffsetDateTime.now())
+                                        .setTimestamp(OffsetDateTime.now().minusDays(1))
                                         .setCorrectness(0.5)
                                         .setSuccess(true)
                                         .setHintsUsed(0)
@@ -418,7 +414,7 @@ class FitnessScoreCalculatorTest {
     private List<ProgressLogItem> logWithOneSuccessfulEntry() {
         return List.of(
                 ProgressLogItem.builder()
-                        .setTimestamp(OffsetDateTime.now())
+                        .setTimestamp(OffsetDateTime.now().minusDays(1))
                         .setCorrectness(1)
                         .setSuccess(true)
                         .setHintsUsed(0)

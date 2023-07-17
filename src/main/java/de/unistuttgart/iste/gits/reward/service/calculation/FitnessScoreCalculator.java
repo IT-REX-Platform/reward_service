@@ -2,15 +2,16 @@ package de.unistuttgart.iste.gits.reward.service.calculation;
 
 import de.unistuttgart.iste.gits.common.event.UserProgressLogEvent;
 import de.unistuttgart.iste.gits.generated.dto.Content;
+import de.unistuttgart.iste.gits.generated.dto.ProgressLogItem;
 import de.unistuttgart.iste.gits.generated.dto.RewardChangeReason;
 import de.unistuttgart.iste.gits.reward.persistence.dao.AllRewardScoresEntity;
 import de.unistuttgart.iste.gits.reward.persistence.dao.RewardScoreEntity;
 import de.unistuttgart.iste.gits.reward.persistence.dao.RewardScoreLogEntry;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,28 +23,25 @@ public class FitnessScoreCalculator implements ScoreCalculator {
     public RewardScoreEntity recalculateScore(AllRewardScoresEntity allRewardScores, List<Content> contents) {
         RewardScoreEntity fitnessScoreBefore = allRewardScores.getFitness();
 
-        OffsetDateTime today = OffsetDateTime.now();
-        double fitnessDecrease = calculateFitnessDecrease(contents, today);
-        double newFitnessScore = fitnessScoreBefore.getValue() - fitnessDecrease ;
+        double fitnessDecrease = calculateFitnessDecrease(contents);
+        double newFitnessScore = fitnessScoreBefore.getValue() - fitnessDecrease;
         int intNewFitnessScore = (int) Math.round(newFitnessScore);
+
+        if (fitnessDecrease == 0) {
+            return fitnessScoreBefore;
+        }
 
         RewardScoreLogEntry logEntry = RewardScoreLogEntry.builder()
                 .date(OffsetDateTime.now())
-                .difference(fitnessScoreBefore.getValue() - intNewFitnessScore)
+                .difference(intNewFitnessScore - fitnessScoreBefore.getValue())
                 .oldValue(fitnessScoreBefore.getValue())
                 .newValue(intNewFitnessScore)
-                .reason(RewardChangeReason.CONTENT_REVIEWED)
-                //.associatedContentIds(Collections.emptyList())
+                .reason(RewardChangeReason.CONTENT_DUE_FOR_REPETITION)
                 .associatedContentIds(getIds(contents))
                 .build();
 
         fitnessScoreBefore.setValue(intNewFitnessScore);
         fitnessScoreBefore.getLog().add(logEntry);
-        fitnessScoreBefore.getLog().clear();
-
-        System.out.println("Fitness Score Before: " + fitnessScoreBefore.getValue());
-        System.out.println("Fitness Score Decrease: " + fitnessDecrease);
-        System.out.println("New Fitness Score: " + newFitnessScore);
 
         return fitnessScoreBefore;
     }
@@ -51,169 +49,138 @@ public class FitnessScoreCalculator implements ScoreCalculator {
     @Override
     public RewardScoreEntity calculateOnContentWorkedOn(AllRewardScoresEntity allRewardScores, List<Content> contents, UserProgressLogEvent event) {
         RewardScoreEntity fitnessScoreBefore = allRewardScores.getFitness();
-        OffsetDateTime today = OffsetDateTime.now();
-        double fitnessDecrease = calculateFitnessDecrease(contents, today);
-        double newFitnessScore = fitnessScoreBefore.getValue() - fitnessDecrease;
-        int intNewFitnessScore = (int) Math.round(newFitnessScore);
 
-        double correctnessBefore = calculateCorrectnessBefore(contents);
+        Content content = getContentOfEvent(contents, event);
+        List<Content> contentsDueForReview = getContentsToRepeat(contents);
 
+        ProgressLogItem latestReview = getLatestReviewExcludingTriggerOfEvent(content);
+        double correctnessBefore = latestReview.getCorrectness();
         double correctnessAfter = event.getCorrectness();
-        int contentsToRepeat = contents.size();
 
-        double fitnessRegen = calculateFitnessRegeneration(newFitnessScore, contentsToRepeat, correctnessBefore, correctnessAfter);
+        double fitnessRegen = calculateFitnessRegeneration(fitnessScoreBefore.getValue(), contentsDueForReview.size(),
+                correctnessBefore, correctnessAfter);
 
-        // Cap the fitness regeneration at 1% per repetition
-        fitnessRegen = Math.min(fitnessRegen, 1);
+        if (fitnessRegen == 0
+            || !event.isSuccess()
+            || wasAlreadyLearnedToday(latestReview)
+        ) {
+            // no change in fitness score or content was not reviewed successfully
+            // or content was already learned today
+            return fitnessScoreBefore;
+        }
 
-        double updatedFitnessScore = newFitnessScore + fitnessRegen * contentsToRepeat;
+        double updatedFitnessScore = fitnessScoreBefore.getValue() + fitnessRegen;
         int intUpdatedFitnessScore = (int) Math.round(updatedFitnessScore);
+
+        if (!isDueForRepetition(content)) {
+            // content was reviewed successfully but is not due for repetition
+            intUpdatedFitnessScore = fitnessScoreBefore.getValue() + 1;
+        }
 
         RewardScoreLogEntry logEntry = RewardScoreLogEntry.builder()
                 .date(OffsetDateTime.now())
-                .difference(intUpdatedFitnessScore - intNewFitnessScore)
+                .difference(intUpdatedFitnessScore - fitnessScoreBefore.getValue())
                 .oldValue(fitnessScoreBefore.getValue())
                 .newValue(intUpdatedFitnessScore)
                 .reason(RewardChangeReason.CONTENT_REVIEWED)
-                .associatedContentIds(getIds(contents))
+                .associatedContentIds(List.of(event.getContentId()))
                 .build();
 
         fitnessScoreBefore.setValue(intUpdatedFitnessScore);
         fitnessScoreBefore.getLog().add(logEntry);
-        System.out.println("Fitness Score Before: " + fitnessScoreBefore.getValue());
-        System.out.println("Fitness Decrease: " + fitnessDecrease);
-        System.out.println("New Fitness Score: " + newFitnessScore);
-        System.out.println("Correctness Before: " + correctnessBefore);
-        System.out.println("Correctness After: " + correctnessAfter);
-        System.out.println("Contents To Repeat: " + contentsToRepeat);
-        System.out.println("Fitness Regen: " + fitnessRegen);
-        System.out.println("Updated Fitness Score: " + updatedFitnessScore);
 
         return fitnessScoreBefore;
     }
+
     private List<UUID> getIds(List<Content> contents) {
-        List<UUID> ids = new ArrayList<>();
-        for (Content content : contents) {
-            ids.add(content.getId());
-        }
-        return ids;
+        return contents.stream().map(Content::getId).toList();
     }
 
-    private double calculateFitnessDecrease(List<Content> contents, OffsetDateTime today) {
+    private Content getContentOfEvent(List<Content> contents, UserProgressLogEvent event) {
+        return contents.stream()
+                .filter(c -> c.getId().equals(event.getContentId()))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private boolean wasAlreadyLearnedToday(ProgressLogItem lastReview) {
+        return lastReview.getTimestamp().truncatedTo(ChronoUnit.DAYS)
+                .equals(OffsetDateTime.now().truncatedTo(ChronoUnit.DAYS));
+    }
+
+    private double calculateFitnessDecrease(List<Content> contents) {
         double fitnessDecrease = 0.0;
 
         for (Content content : contents) {
-            if (isDueForRepetition(content)) {
+            if (isDueForRepetition(content) && isNotNew(content)) {
                 int daysOverdue = calculateDaysOverdue(content);
-                double correctness = calculateCorrectnessModifier(content, today);
+                double correctness = calculateCorrectnessModifier(getLatestReview(content));
                 double decreasePerDay = 1 + (2 * daysOverdue * (1 - correctness));
                 fitnessDecrease += decreasePerDay;
-
-                System.out.println("Content: " + content.getId());
-                System.out.println("Days Overdue: " + daysOverdue);
-                System.out.println("Correctness: " + correctness);
-                System.out.println("Decrease Per Day: " + decreasePerDay);
             }
         }
-
-        System.out.println("Total Fitness Decrease: " + fitnessDecrease);
 
         return Math.min(MAX_DECREASE_PER_DAY, fitnessDecrease);
     }
 
     private boolean isDueForRepetition(Content content) {
         OffsetDateTime today = OffsetDateTime.now();
-        OffsetDateTime repetitionDate = content.getUserProgressData().getLastLearnDate();
-
-        System.out.println("Content: " + content.getId());
-        System.out.println("Today: " + today);
-        System.out.println("Repetition Date: " + repetitionDate);
+        OffsetDateTime repetitionDate = content.getUserProgressData().getNextLearnDate();
 
         // Check if the repetition date is today or in the past
-        boolean isDue = repetitionDate != null && (repetitionDate.isBefore(today) || repetitionDate.isEqual(today));
-
-        System.out.println("Is Due for Repetition: " + isDue);
-
-        return isDue;
+        return repetitionDate != null && (repetitionDate.isBefore(today) || repetitionDate.isEqual(today));
     }
 
+    private boolean isNotNew(Content content) {
+        // check if the content has been learned before successfully
+        // otherwise it is considered new and should not be considered for fitness decrease
+        return content.getUserProgressData()
+                .getLog()
+                .stream()
+                .anyMatch(ProgressLogItem::getSuccess);
+    }
+
+    private List<Content> getContentsToRepeat(List<Content> contents) {
+        return contents.stream()
+                .filter(this::isDueForRepetition)
+                .toList();
+    }
 
     private int calculateDaysOverdue(Content content) {
         OffsetDateTime today = OffsetDateTime.now();
         OffsetDateTime repetitionDate = content.getUserProgressData().getNextLearnDate();
 
-        System.out.println("Content: " + content.getId());
-        System.out.println("Today: " + today);
-        System.out.println("Repetition Date: " + repetitionDate);
+        long daysBetween = Duration.between(today, repetitionDate).abs().toDays();
 
-        // Calculate the number of days between the current date and the repetition date
-        long daysBetween = ChronoUnit.DAYS.between(today, repetitionDate);
-
-        System.out.println("Days Between: " + daysBetween);
-
-        // If the content is due for repetition today, set daysOverdue to 1
-        int daysOverdue = (int) Math.max(1, daysBetween);
-
-        System.out.println("Days Overdue: " + daysOverdue);
-
-        return daysOverdue;
+        // add one because at the repetition date the content is already overdue
+        return (int) daysBetween + 1;
     }
 
 
-    private double calculateCorrectnessModifier(Content content, OffsetDateTime today) {
-        OffsetDateTime learningDate = content.getUserProgressData().getLastLearnDate();
-
-        System.out.println("Content: " + content.getId());
-        System.out.println("Today: " + today);
-        System.out.println("Learning Date: " + learningDate);
-
-        if (learningDate == null) {
-            return 0.0; // or handle the null case appropriately
-        }
-
-        long daysSinceLearning = ChronoUnit.DAYS.between(learningDate, today);
-
-        System.out.println("Days Since Learning: " + daysSinceLearning);
-
-        // Calculate the correctness modifier based on the days since learning
-        double correctnessModifier = 1 - (0.1 * daysSinceLearning);
-
-        System.out.println("Correctness Modifier: " + correctnessModifier);
-
-        // Ensure the correctness modifier is within the range of 0 to 1
-        double correctness = Math.max(0, Math.min(1, correctnessModifier));
-
-        System.out.println("Correctness: " + correctness);
-
-        // Square the correctness value to make the decrease more significant for low correctness
-        return Math.pow(correctness, 2);
+    private double calculateCorrectnessModifier(ProgressLogItem logItem) {
+        return Math.pow(logItem.getCorrectness(), 2);
     }
 
-    private double calculateCorrectnessBefore(List<Content> contents) {
-        double correctnessSum = 0.0;
-
-        for (Content content : contents) {
-            double correctness = calculateCorrectnessModifier(content, OffsetDateTime.now());
-            correctnessSum += correctness;
-            System.out.println("Content: " + content.getId());
-            System.out.println("Correctness: " + correctness);
-        }
-
-        double averageCorrectness = correctnessSum / contents.size();
-        System.out.println("Average Correctness: " + averageCorrectness);
-
-        return averageCorrectness;
+    private ProgressLogItem getLatestReview(Content content) {
+        return content.getUserProgressData()
+                .getLog()
+                .stream()
+                .findFirst()
+                .orElseThrow();
     }
 
+    private ProgressLogItem getLatestReviewExcludingTriggerOfEvent(Content content) {
+        return content.getUserProgressData()
+                .getLog()
+                .stream()
+                // make sure that the latest review is not the one that triggered the event
+                .filter(logItem -> Duration.between(logItem.getTimestamp(), OffsetDateTime.now()).toMinutes() > 5)
+                .findFirst()
+                .orElseThrow();
+    }
 
     private double calculateFitnessRegeneration(double fitness, int contentsToRepeat, double correctnessBefore, double correctnessAfter) {
-        double fitnessRegen = (1 + correctnessAfter - correctnessBefore) * (100 - fitness) / contentsToRepeat;
-        System.out.println("Fitness: " + fitness);
-        System.out.println("Contents To Repeat: " + contentsToRepeat);
-        System.out.println("Correctness Before: " + correctnessBefore);
-        System.out.println("Correctness After: " + correctnessAfter);
-        System.out.println("Fitness Regen: " + fitnessRegen);
-        return fitnessRegen;
+        return (1 + correctnessAfter - correctnessBefore) * (100 - fitness) / contentsToRepeat;
     }
 
 }
