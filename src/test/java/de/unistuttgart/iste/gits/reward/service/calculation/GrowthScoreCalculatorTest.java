@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class GrowthScoreCalculatorTest {
+class GrowthScoreCalculatorTest {
 
     private final GrowthScoreCalculator growthScoreCalculator = new GrowthScoreCalculator();
 

@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 @GraphQlApiTest
-public class QueryTest {
+class QueryTest {
 
     @Autowired
     AllRewardScoresRepository allRewardScoresRepository;

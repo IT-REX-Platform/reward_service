@@ -15,7 +15,7 @@ import java.util.UUID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-public class HealthScoreCalculatorTest {
+class HealthScoreCalculatorTest {
 
     private final HealthScoreCalculator healthScoreCalculator = new HealthScoreCalculator();
 

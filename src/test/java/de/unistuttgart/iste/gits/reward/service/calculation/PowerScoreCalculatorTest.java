@@ -19,7 +19,7 @@ import static org.hamcrest.Matchers.is;
 /**
  * Test class for {@link PowerScoreCalculator}
  */
-public class PowerScoreCalculatorTest {
+class PowerScoreCalculatorTest {
 
     private final PowerScoreCalculator powerScoreCalculator = new PowerScoreCalculator();
 
