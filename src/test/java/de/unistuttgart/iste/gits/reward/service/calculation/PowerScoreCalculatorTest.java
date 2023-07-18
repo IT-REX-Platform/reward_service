@@ -98,13 +98,6 @@ public class PowerScoreCalculatorTest {
     }
 
 
-
-
-
-    private Content createContentWithUserData(UserProgressData userProgressData) {
-        return createContentWithUserData(UUID.randomUUID(), userProgressData);
-    }
-
     private Content createContentWithUserData(UUID contentId, UserProgressData userProgressData) {
         return FlashcardSetAssessment.builder()
                 .setId(contentId)
