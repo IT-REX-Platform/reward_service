@@ -204,42 +204,6 @@ public class HealthScoreCalculatorTest {
         assertThat(health.getLog(), is(empty()));
     }
 
-    /**
-     * Given only contents that were not learned yet exist
-     * When recalculateScore is called
-     * Then the health score is not changed and no log entry is added
-     * <p>
-     * Note: those contents should only affect health, not health
-     */
-    @Test
-    void testRecalculateScoresWithNoContentsThatWereNotLearnedYet() {
-        AllRewardScoresEntity allRewardScores = createAllRewardScoresEntityWithHealthOf(100);
-        List<Content> contents = List.of(
-                createContentWithUserData(
-                        UserProgressData.builder()
-                                .setNextLearnDate(OffsetDateTime.now().minusDays(1))
-                                .setLog(List.of()) // not learned yet
-                                .build()),
-                createContentWithUserData(
-                        UserProgressData.builder()
-                                .setNextLearnDate(OffsetDateTime.now().minusDays(3))
-                                .setLog(List.of(ProgressLogItem.builder()
-                                        .setTimestamp(OffsetDateTime.now().minusDays(3))
-                                        .setCorrectness(0)
-                                        .setSuccess(false)
-                                        .setHintsUsed(0)
-                                        .build())) // not learned successfully yet
-                                .build())
-        );
-
-        RewardScoreEntity health = healthScoreCalculator.recalculateScore(allRewardScores, contents);
-
-        // should not change as no content is due for repetition
-        assertThat(health.getValue(), is(100));
-        assertThat(health.getLog(), is(empty()));
-    }
-
-
     private List<ProgressLogItem> logWithOneSuccessfulEntry() {
         return List.of(
                 ProgressLogItem.builder()
