@@ -154,24 +154,17 @@ public class HealthScoreCalculatorTest {
     }
 
     /**
-     * Given no content is due for repetition
+     * Given no content is due for learning
      * When recalculateScore is called
      * Then the health score is not changed and no log entry is added
      */
     @Test
-    void testRecalculateScoresWithoutContentsDueForRepetition() {
+    void testRecalculateScoresWithoutContentsDueForLearning() {
         AllRewardScoresEntity allRewardScores = createAllRewardScoresEntityWithHealthOf(100);
+        UUID contentId = UUID.randomUUID();
         List<Content> contents = List.of(
-                createContentWithUserData(
-                        UserProgressData.builder()
-                                .setNextLearnDate(OffsetDateTime.now().plusDays(1))
-                                .setLog(logWithOneSuccessfulEntry())
-                                .build()),
-                createContentWithUserData(
-                        UserProgressData.builder()
-                                .setNextLearnDate(OffsetDateTime.now().plusDays(3))
-                                .setLog(logWithOneSuccessfulEntry())
-                                .build())
+                createContentWithUserData(contentId,
+                        UserProgressData.builder().build(), -1)
         );
 
         RewardScoreEntity health = healthScoreCalculator.recalculateScore(allRewardScores, contents);
@@ -179,44 +172,6 @@ public class HealthScoreCalculatorTest {
         // should not change as no content is due for repetition
         assertThat(health.getValue(), is(100));
         assertThat(health.getLog(), is(empty()));
-    }
-
-    /**
-     * Given a content without a repetition date
-     * When recalculateScore is called
-     * Then the health score is not changed and no log entry is added
-     */
-    @Test
-    void testRecalculateScoresWithContentThatHasNoRepetitionDate() {
-        AllRewardScoresEntity allRewardScores = createAllRewardScoresEntityWithHealthOf(100);
-        List<Content> contents = List.of(
-                createContentWithUserData(
-                        UserProgressData.builder()
-                                .setNextLearnDate(null) // no repetition date, e.g. media content
-                                .setLog(logWithOneSuccessfulEntry())
-                                .build())
-        );
-
-        RewardScoreEntity health = healthScoreCalculator.recalculateScore(allRewardScores, contents);
-
-        // should not change as no content is due for repetition
-        assertThat(health.getValue(), is(100));
-        assertThat(health.getLog(), is(empty()));
-    }
-
-    private List<ProgressLogItem> logWithOneSuccessfulEntry() {
-        return List.of(
-                ProgressLogItem.builder()
-                        .setTimestamp(OffsetDateTime.now().minusDays(1))
-                        .setCorrectness(1)
-                        .setSuccess(true)
-                        .setHintsUsed(0)
-                        .build()
-        );
-    }
-
-    private Content createContentWithUserData(UserProgressData userProgressData) {
-        return createContentWithUserData(UUID.randomUUID(), userProgressData, 0);
     }
 
     private Content createContentWithUserData(UUID contentId, UserProgressData userProgressData, int overdue) {
