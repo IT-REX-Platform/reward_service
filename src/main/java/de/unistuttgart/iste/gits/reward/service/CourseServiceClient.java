@@ -82,7 +82,7 @@ public class CourseServiceClient {
 
             String query = """
                     query($contentId: UUID!) {
-                        resourceByIds(ids: [$contentId]) {
+                        resourceById(ids: [$contentId]) {
                             availableCourses
                         }
                     }
@@ -91,7 +91,7 @@ public class CourseServiceClient {
             log.info("Sending resourceById query to course service with contentId {}", contentId);
             UUID courseId = graphQlClient.document(query)
                     .variable("contentId", contentId)
-                    .retrieve("resourceByIds[0].availableCourses[0]")
+                    .retrieve("resourceById[0].availableCourses[0]")
                     .toEntity(UUID.class)
                     .retry(RETRY_COUNT)
                     .block();
