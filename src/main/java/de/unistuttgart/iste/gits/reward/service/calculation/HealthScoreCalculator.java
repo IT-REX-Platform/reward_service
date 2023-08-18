@@ -76,7 +76,7 @@ public class HealthScoreCalculator implements ScoreCalculator {
 
         RewardScoreLogEntry logEntry = RewardScoreLogEntry.builder()
                 .date(today)
-                .difference(healthIncrease)
+                .difference(newValue - oldScore)
                 .newValue(newValue)
                 .oldValue(oldScore)
                 .reason(RewardChangeReason.CONTENT_DONE)
