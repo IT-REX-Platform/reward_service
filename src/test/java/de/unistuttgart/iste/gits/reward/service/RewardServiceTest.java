@@ -18,6 +18,7 @@ import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 class RewardServiceTest {
@@ -244,6 +245,33 @@ class RewardServiceTest {
                 .growth(initializeRewardScoreEntity(0))
                 .power(initializeRewardScoreEntity(0));
 
+    }
+
+    @Test
+    void testInvalidCourseEventInput(){
+        CourseChangeEvent noCourseIdEvent = CourseChangeEvent.builder().operation(CrudOperation.DELETE).build();
+        CourseChangeEvent noOperationEvent = CourseChangeEvent.builder().courseId(UUID.randomUUID()).build();
+
+
+        // act
+        assertThrows(NullPointerException.class, () -> rewardService.removeRewardData(noCourseIdEvent));
+        assertThrows(NullPointerException.class, () -> rewardService.removeRewardData(noOperationEvent));
+
+        // verify that the repository was called
+        verify(allRewardScoresRepository, never()).findAllRewardScoresEntitiesById_CourseId(any());
+
+    }
+
+    @Test
+    void testWrongOperationTypeCourseEventInput(){
+        CourseChangeEvent createEvent = CourseChangeEvent.builder().courseId(UUID.randomUUID()).operation(CrudOperation.CREATE).build();
+        CourseChangeEvent updateEvent = CourseChangeEvent.builder().courseId(UUID.randomUUID()).operation(CrudOperation.UPDATE).build();
+
+        rewardService.removeRewardData(createEvent);
+        rewardService.removeRewardData(updateEvent);
+
+        // verify that the repository was called
+        verify(allRewardScoresRepository, never()).findAllRewardScoresEntitiesById_CourseId(any());
     }
 
     private static RewardScoreEntity initializeRewardScoreEntity(int initialValue) {
