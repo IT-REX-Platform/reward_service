@@ -1,5 +1,7 @@
 package de.unistuttgart.iste.gits.reward.service;
 
+import de.unistuttgart.iste.gits.common.event.CourseChangeEvent;
+import de.unistuttgart.iste.gits.common.event.CrudOperation;
 import de.unistuttgart.iste.gits.common.event.UserProgressLogEvent;
 import de.unistuttgart.iste.gits.generated.dto.*;
 import de.unistuttgart.iste.gits.reward.persistence.dao.AllRewardScoresEntity;
@@ -200,6 +202,37 @@ class RewardServiceTest {
         verify(allRewardScoresRepository, times(1)).findAllRewardScoresEntitiesById_CourseId(courseId);
 
 
+    }
+
+    @Test
+    void testDataDeletion() {
+        // arrange test data
+        UUID courseId = UUID.randomUUID();
+
+        UUID userId1 = UUID.randomUUID();
+        UUID userId2 = UUID.randomUUID();
+        UUID userId3 = UUID.randomUUID();
+
+        AllRewardScoresEntity rewardScores1 = dummyAllRewardScoresBuilder(courseId, userId1).power(initializeRewardScoreEntity(10)).build();
+        AllRewardScoresEntity rewardScores2 = dummyAllRewardScoresBuilder(courseId, userId2).power(initializeRewardScoreEntity(30)).build();
+        AllRewardScoresEntity rewardScores3 = dummyAllRewardScoresBuilder(courseId, userId3).build();
+
+        List<AllRewardScoresEntity> rewardScoresEntities = new ArrayList<>();
+        rewardScoresEntities.add(rewardScores1);
+        rewardScoresEntities.add(rewardScores2);
+        rewardScoresEntities.add(rewardScores3);
+
+        CourseChangeEvent event = CourseChangeEvent.builder().courseId(courseId).operation(CrudOperation.DELETE).build();
+
+        // mock repository
+        when(allRewardScoresRepository.findAllRewardScoresEntitiesById_CourseId(courseId)).thenReturn(rewardScoresEntities);
+
+        // act
+        rewardService.removeRewardData(event);
+
+
+        // verify that the repository was called
+        verify(allRewardScoresRepository, times(1)).findAllRewardScoresEntitiesById_CourseId(courseId);
     }
 
     private static AllRewardScoresEntity.AllRewardScoresEntityBuilder dummyAllRewardScoresBuilder(UUID courseId, UUID userId) {
