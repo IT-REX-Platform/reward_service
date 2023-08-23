@@ -109,7 +109,7 @@ public class HealthScoreCalculator implements ScoreCalculator {
      * @param today          the current date
      * @return a positive number representing the health decrease
      */
-    private int calculateHealthDecrease(List<Content> newDueContents, OffsetDateTime today) {
+    public int calculateHealthDecrease(List<Content> newDueContents, OffsetDateTime today) {
         return (int) Math.min(HEALTH_DECREASE_CAP,
                 Math.floor(HEALTH_MODIFIER_PER_DAY * newDueContents.stream()
                         .mapToInt(content -> getDaysOverDue(content, today))
@@ -143,4 +143,17 @@ public class HealthScoreCalculator implements ScoreCalculator {
         }
         return (int) Duration.between(today, dueDate).abs().toDays();
     }
+    public int calculateInitialHealthValueForNewEntity(List<Content> contents) {
+        OffsetDateTime today = OffsetDateTime.now();
+        List<Content> newDueContents = getDueContentsThatWereNeverWorked(contents, today);
+        int healthDecrease = calculateHealthDecrease(newDueContents, today);
+
+        // Calculate initial health value based on overdue, never-worked-on contents
+        int initialHealthValue = 100 - healthDecrease;
+
+        // Ensure the initial health value is within bounds (0 to 100)
+        return Math.max(0, Math.min(100, initialHealthValue));
+    }
+
+
 }
