@@ -252,8 +252,7 @@ class HealthScoreCalculatorTest {
         int initialHealthValue = healthScoreCalculator.calculateInitialHealthValueForNewEntity(contents);
 
         // Calculate expected initial health value based on your logic
-        int expectedInitialHealthValue = 100 - healthScoreCalculator.calculateHealthDecrease(contents, OffsetDateTime.now());
-
+        int expectedInitialHealthValue = 91;
         assertThat(initialHealthValue, is(expectedInitialHealthValue));
     }
 }
