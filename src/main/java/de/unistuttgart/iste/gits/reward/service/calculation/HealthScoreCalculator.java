@@ -109,7 +109,7 @@ public class HealthScoreCalculator implements ScoreCalculator {
      * @param today          the current date
      * @return a positive number representing the health decrease
      */
-    public int calculateHealthDecrease(List<Content> newDueContents, OffsetDateTime today) {
+    private int calculateHealthDecrease(List<Content> newDueContents, OffsetDateTime today) {
         return (int) Math.min(HEALTH_DECREASE_CAP,
                 Math.floor(HEALTH_MODIFIER_PER_DAY * newDueContents.stream()
                         .mapToInt(content -> getDaysOverDue(content, today))
