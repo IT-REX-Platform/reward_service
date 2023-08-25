@@ -148,7 +148,7 @@ public class RewardService {
             // Handle exceptions by falling back to default values
             allRewardScoresEntity.setHealth(initializeRewardScoreEntity(100));
             //  log the exception for debugging or further analysis
-            e.printStackTrace();
+            log.error("An error occurred while initializing reward scores:", e);
         }
         allRewardScoresEntity.setStrength(initializeRewardScoreEntity(0));
         allRewardScoresEntity.setFitness(initializeRewardScoreEntity(100));
