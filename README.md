@@ -1,6 +1,6 @@
 # Reward Service
 
-This service plays a crucial role in managing the reward system within the IT-REX platform. It operates by tracking various activities carried out by students on the platform, such as completing quizzes, watching lectures, revisiting content, engaging in flashcard learning, and other related actions. Once these activities are detected, the service calculates corresponding rewards and meticulously records them in four distinct databases, namely Growth, Health, Fitness, and Power.
+This service plays a crucial role in managing the reward system within the IT-REX platform. It operates by tracking various activities carried out by students on the platform, such as completing quizzes, watching lectures, revisiting content, engaging in flashcard learning, and other related actions. Once these activities are detected, the service calculates corresponding rewards and meticulously records them in four distinct databases, namely Growth, Health, Fitness, and Power.[Reward Service Scoring System](https://gits-enpro.readthedocs.io/en/latest/dev-manuals/gamification/Scoring%20System.html)
 
 These reward values are not just numbers in a database; they are made accessible to students in a visually appealing format right on the platform. This visual presentation allows students to see their progress and achievements in real-time, creating a motivating and engaging experience.
 
