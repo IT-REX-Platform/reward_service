@@ -1,3 +1,11 @@
 # Reward Service
 
-This service calculated reward scores for students.
+This service plays a crucial role in managing the reward system within the IT-REX platform. It operates by tracking various activities carried out by students on the platform, such as completing quizzes, watching lectures, revisiting content, engaging in flashcard learning, and other related actions. Once these activities are detected, the service calculates corresponding rewards and meticulously records them in four distinct databases, namely Growth, Health, Fitness, and Power.
+
+These reward values are not just numbers in a database; they are made accessible to students in a visually appealing format right on the platform. This visual presentation allows students to see their progress and achievements in real-time, creating a motivating and engaging experience.
+
+One unique aspect of this service is its handling of the "Power" value, which stands out as it represents a comprehensive measure encompassing various aspects of a student's performance and engagement. The "Power" value holds particular significance as it contributes to a competitive element within the platform. Students can view their rankings on a scoreboard, allowing them to gauge their performance relative to their peers within a specific course.
+
+Furthermore, this service goes beyond the confines of the IT-REX platform. It offers an Application Programming Interface (API) that external services can utilize to access and integrate with the reward system. For instance, when a student completes an exercise on an external platform, this service ensures that the rewards earned from that external activity are seamlessly integrated into the student's overall reward profile within IT-REX.
+
+In essence, this service serves as the backbone of IT-REX's reward ecosystem, motivating students to actively engage with the platform's educational content while providing a competitive edge through the "Power" ranking system. It also fosters interoperability by enabling external services to contribute to a student's rewards, ultimately enhancing the overall learning experience.
