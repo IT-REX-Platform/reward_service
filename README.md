@@ -24,7 +24,7 @@ The Reward Service serves the following purposes within our system:
 
 2. **Track Progress:** It helps users track their learning progress and areas of improvement through different reward scores.
 
-3. **Encourage Interaction:** The service encourages interaction among students through REX-Duels, fostering healthy competition and regular learning.
+3. **Encourage Interaction:** The service encourages interaction among students through fostering healthy competition and regular learning.
 
 4. **Facilitate Ranking:** The Power Score allows for the ranking of students based on their overall performance.
 
