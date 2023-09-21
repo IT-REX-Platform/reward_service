@@ -18,19 +18,15 @@ For more details about the Reward Service Scoring System, please refer to the [d
 
 ### Relevant for deployment
 
-| Name                              | Description                        | Value in Dev Environment                        | Value in Prod Environment                                          |
-|-----------------------------------|------------------------------------|-------------------------------------------------|--------------------------------------------------------------------|
-| spring.datasource.url             | PostgreSQL database URL            | jdbc:postgresql://localhost:7032/reward_service | jdbc:postgresql://reward-service-db-postgresql:5432/reward-service |
-| spring.datasource.username        | Database username                  | root                                            | gits                                                               |
-| spring.datasource.password        | Database password                  | root                                            | *secret*                                                           |
-| DAPR_HTTP_PORT                    | Dapr HTTP Port                     | 7000                                            | 3500                                                               |
-| server.port                       | Port on which the application runs | 7001                                            | 7001                                                               |
-| spring.sql.init.continue-on-error | Continue on SQL init error         | true                                            | true                                                               |
-| spring.jpa.hibernate.ddl-auto     | Hibernate DDL auto strategy        | create                                          | update                                                             |
-| DAPR_GRPC_PORT                    | Dapr gRPC Port                     | -                                               | 50001                                                              |
-| reward.recalculation.cron         | Cron expression for recalculation  | 0 0 3 * * *                                     | 0 0 3 * * *                                                        |
-| content_service.url               | URL for content service GraphQL    | http://localhost:4001/graphql                   | http://localhost:3500/v1.0/invoke/content-service/method/graphql   |
-
+| Name                       | Description                        | Value in Dev Environment                        | Value in Prod Environment                                          |
+|----------------------------|------------------------------------|-------------------------------------------------|--------------------------------------------------------------------|
+| spring.datasource.url      | PostgreSQL database URL            | jdbc:postgresql://localhost:7032/reward_service | jdbc:postgresql://reward-service-db-postgresql:5432/reward-service |
+| spring.datasource.username | Database username                  | root                                            | gits                                                               |
+| spring.datasource.password | Database password                  | root                                            | *secret*                                                           |
+| DAPR_HTTP_PORT             | Dapr HTTP Port                     | 7000                                            | 3500                                                               |
+| server.port                | Port on which the application runs | 7001                                            | 7001                                                               |
+| reward.recalculation.cron  | Cron expression for recalculation  | 0 0 3 * * *                                     | 0 0 3 * * *                                                        |
+| content_service.url        | URL for content service GraphQL    | http://localhost:4001/graphql                   | http://localhost:3500/v1.0/invoke/content-service/method/graphql   |
 ### Other properties
 | Name                                    | Description                               | Value in Dev Environment                | Value in Prod Environment                                        |
 |-----------------------------------------|-------------------------------------------|-----------------------------------------|------------------------------------------------------------------|
@@ -40,6 +36,10 @@ For more details about the Reward Service Scoring System, please refer to the [d
 | spring.jpa.properties.hibernate.dialect | Hibernate dialect for PostgreSQL          | org.hibernate.dialect.PostgreSQLDialect | org.hibernate.dialect.PostgreSQLDialect                          |
 | spring.sql.init.mode                    | SQL initialization mode                   | always                                  | always                                                           |
 | spring.jpa.show-sql                     | Show SQL queries in logs                  | true                                    | true                                                             |
+| spring.sql.init.continue-on-error       | Continue on SQL init error                | true                                    | true                                                             |
+| spring.jpa.hibernate.ddl-auto           | Hibernate DDL auto strategy               | create                                  | update                                                           |
+| DAPR_GRPC_PORT                          | Dapr gRPC Port                            | -                                       | 50001                                                            |
+
 
 ## API description
 
