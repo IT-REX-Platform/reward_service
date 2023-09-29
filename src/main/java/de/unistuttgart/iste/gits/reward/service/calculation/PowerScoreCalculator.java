@@ -4,6 +4,9 @@ import de.unistuttgart.iste.gits.common.event.UserProgressLogEvent;
 import de.unistuttgart.iste.gits.generated.dto.Content;
 import de.unistuttgart.iste.gits.generated.dto.RewardChangeReason;
 import de.unistuttgart.iste.gits.reward.persistence.entity.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
@@ -15,14 +18,36 @@ import java.util.List;
  * <a href="https://gits-enpro.readthedocs.io/en/latest/dev-manuals/gamification/Scoring%20System.html#power">here</a>.
  */
 @Component
+@Slf4j
 public class PowerScoreCalculator implements ScoreCalculator {
+
+    private static final double HEALTH_FITNESS_MULTIPLIER_DEFAULT = 0.1;
 
     /**
      * The multiplier for the health and fitness score.
-     * This controls how much the health and fitness score influence the power score.
-     * By default, the health and fitness score can increase the power score by up to 10%.
+     * @see PowerScoreCalculator#PowerScoreCalculator(double)
      */
-    public static final double HEALTH_FITNESS_MULTIPLIER = 0.1;
+    private final double healthFitnessMultiplier;
+
+    /**
+     * Creates a new instance.
+     *
+     * @param healthFitnessMultiplier the health and fitness multiplier.
+     *                                This controls how much the health and fitness score influence the power score.
+     *                                By default, the health and fitness score can increase the power score by up to 10%.
+     */
+    @Autowired
+    public PowerScoreCalculator(@Value("${reward.power.health_fitness_multiplier}") final double healthFitnessMultiplier) {
+        log.info("Creating PowerScoreCalculator with healthFitnessMultiplier={}", healthFitnessMultiplier);
+        this.healthFitnessMultiplier = healthFitnessMultiplier;
+    }
+
+    /**
+     * Creates a new instance with default values.
+     */
+    public PowerScoreCalculator() {
+        this(HEALTH_FITNESS_MULTIPLIER_DEFAULT);
+    }
 
     @Override
     public RewardScoreEntity recalculateScore(final AllRewardScoresEntity allRewardScores,
@@ -45,7 +70,7 @@ public class PowerScoreCalculator implements ScoreCalculator {
         final int oldPower = allRewardScores.getPower().getValue();
 
         final double powerValue = (growth + strength)
-                                  + PowerScoreCalculator.HEALTH_FITNESS_MULTIPLIER * 0.01 * (health + fitness) * (growth + strength);
+                                  + healthFitnessMultiplier * 0.01 * (health + fitness) * (growth + strength);
         final int newPower = (int) Math.round(powerValue);
 
         final int difference = newPower - oldPower;

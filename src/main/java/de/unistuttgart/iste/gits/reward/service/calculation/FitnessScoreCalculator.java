@@ -3,6 +3,9 @@ package de.unistuttgart.iste.gits.reward.service.calculation;
 import de.unistuttgart.iste.gits.common.event.UserProgressLogEvent;
 import de.unistuttgart.iste.gits.generated.dto.*;
 import de.unistuttgart.iste.gits.reward.persistence.entity.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -15,13 +18,41 @@ import java.util.*;
  * <a href="https://gits-enpro.readthedocs.io/en/latest/dev-manuals/gamification/Scoring%20System.html#fitness">here</a>.
  */
 @Component
+@Slf4j
 public class FitnessScoreCalculator implements ScoreCalculator {
-    private static final double MAX_DECREASE_PER_DAY = 20;
-
-    private static final double FITNESS_MODIFIER_PER_DAY = 2.0;
 
     private static final int FITNESS_MAX = 100;
     private static final int FITNESS_MIN = 0;
+
+    private static final double MAX_DECREASE_PER_DAY_DEFAULT = 20.0;
+
+    private static final double FITNESS_MODIFIER_PER_DAY_DEFAULT = 2.0;
+
+    private double maxDecreasePerDay;
+
+    private double fitnessModifierPerDay;
+
+    /**
+     * Creates a new instance.
+     *
+     * @param maxDecreasePerDay     the maximum decrease per day
+     * @param fitnessModifierPerDay the fitness modifier, applied to the number of days each content is overdue
+     */
+    @Autowired
+    public FitnessScoreCalculator(@Value("${reward.fitness.max_decrease_per_day}") final double maxDecreasePerDay,
+                                  @Value("${reward.fitness.multiplier}") final double fitnessModifierPerDay) {
+        log.info("Creating FitnessScoreCalculator with maxDecreasePerDay={}, fitnessModifierPerDay={}",
+                maxDecreasePerDay, fitnessModifierPerDay);
+        this.maxDecreasePerDay = maxDecreasePerDay;
+        this.fitnessModifierPerDay = fitnessModifierPerDay;
+    }
+
+    /**
+     * Creates a new instance with default values.
+     */
+    public FitnessScoreCalculator() {
+        this(MAX_DECREASE_PER_DAY_DEFAULT, FITNESS_MODIFIER_PER_DAY_DEFAULT);
+    }
 
     @Override
     public RewardScoreEntity recalculateScore(final AllRewardScoresEntity allRewardScores, final List<Content> contents) {
@@ -148,12 +179,12 @@ public class FitnessScoreCalculator implements ScoreCalculator {
             if (isDueForRepetition(content) && isNotNew(content)) {
                 final int daysOverdue = calculateDaysOverdue(content);
                 final double correctness = calculateCorrectnessModifier(getLatestReview(content));
-                final double decreasePerDay = 1 + (FITNESS_MODIFIER_PER_DAY * daysOverdue * (1 - correctness));
+                final double decreasePerDay = 1 + (fitnessModifierPerDay * daysOverdue * (1 - correctness));
                 fitnessDecrease += decreasePerDay;
             }
         }
 
-        return Math.min(MAX_DECREASE_PER_DAY, fitnessDecrease);
+        return Math.min(maxDecreasePerDay, fitnessDecrease);
     }
 
     private boolean isDueForRepetition(final Content content) {

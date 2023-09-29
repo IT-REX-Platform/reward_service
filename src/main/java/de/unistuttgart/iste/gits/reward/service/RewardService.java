@@ -52,6 +52,7 @@ public class RewardService {
      * @return the recalculated reward scores
      */
     public RewardScores recalculateScores(final UUID courseId, final UUID userId) {
+
         final AllRewardScoresEntity allRewardScoresEntity = rewardScoresRepository
                 .findById(new AllRewardScoresEntity.PrimaryKey(courseId, userId))
                 .orElseGet(() -> initializeRewardScores(courseId, userId));

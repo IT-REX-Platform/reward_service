@@ -4,6 +4,9 @@ import de.unistuttgart.iste.gits.common.event.UserProgressLogEvent;
 import de.unistuttgart.iste.gits.generated.dto.Content;
 import de.unistuttgart.iste.gits.generated.dto.RewardChangeReason;
 import de.unistuttgart.iste.gits.reward.persistence.entity.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -12,26 +15,53 @@ import java.util.List;
 import java.util.UUID;
 
 @Component
+@Slf4j
 public class HealthScoreCalculator implements ScoreCalculator {
-
-    /**
-     * Multiplier for the number of days a content is overdue, valid for the daily health decrease.
-     */
-    public static final double HEALTH_MODIFIER_PER_DAY = 0.5;
-    /**
-     * The maximum health decrease per day.
-     */
-    public static final double HEALTH_DECREASE_CAP = 20.0;
 
     /**
      * The maximum health value.
      */
-    public static final int HEALTH_MAX = 100;
+    private static final int HEALTH_MAX = 100;
 
     /**
      * The minimum health value.
      */
-    public static final int HEALTH_MIN = 0;
+    private static final int HEALTH_MIN = 0;
+
+    private static final double HEALTH_MODIFIER_PER_DAY_DEFAULT = 0.5;
+    private static final double HEALTH_DECREASE_CAP_DEFAULT = 20;
+
+    /**
+     * Multiplier for the number of days a content is overdue, valid for the daily health decrease.
+     */
+    private final double healthModifierPerDay;
+
+    /**
+     * The maximum health decrease per day.
+     */
+    private final double healthDecreaseCap;
+
+    /**
+     * Creates a new instance.
+     *
+     * @param healthModifierPerDay the health modifier per day
+     * @param healthDecreaseCap    the health decrease cap
+     */
+    @Autowired
+    public HealthScoreCalculator(@Value("${reward.health.multiplier}") final double healthModifierPerDay,
+                                 @Value("${reward.health.max_decrease_per_day}") final double healthDecreaseCap) {
+        log.info("Creating HealthScoreCalculator with healthModifierPerDay={}, healthDecreaseCap={}",
+                healthModifierPerDay, healthDecreaseCap);
+        this.healthModifierPerDay = healthModifierPerDay;
+        this.healthDecreaseCap = healthDecreaseCap;
+    }
+
+    /**
+     * Creates a new instance with default values.
+     */
+    public HealthScoreCalculator() {
+        this(HEALTH_MODIFIER_PER_DAY_DEFAULT, HEALTH_DECREASE_CAP_DEFAULT);
+    }
 
     @Override
     public RewardScoreEntity recalculateScore(final AllRewardScoresEntity allRewardScores,
@@ -156,7 +186,7 @@ public class HealthScoreCalculator implements ScoreCalculator {
 
     /**
      * Calculates the health decrease based on the number of days the content is overdue.
-     * The decrease is capped at {@link #HEALTH_DECREASE_CAP}.
+     * The decrease is capped at {@link #healthDecreaseCap}.
      *
      * @param newDueContents the contents that are due but were never worked on
      * @param today          the current date
@@ -168,8 +198,8 @@ public class HealthScoreCalculator implements ScoreCalculator {
                 .map(days -> days + 1) // on the day it is due, it should count as 1 day overdue
                 .sum();
 
-        return (int) Math.min(HEALTH_DECREASE_CAP,
-                Math.floor(HEALTH_MODIFIER_PER_DAY * baseHealthDecrease));
+        return (int) Math.min(healthDecreaseCap,
+                Math.floor(healthModifierPerDay * baseHealthDecrease));
     }
 
     private List<Content> getDueContentsThatWereNeverWorked(final List<Content> contents, final OffsetDateTime today) {
@@ -202,6 +232,5 @@ public class HealthScoreCalculator implements ScoreCalculator {
         }
         return (int) Duration.between(today, dueDate).abs().toDays();
     }
-
 
 }
