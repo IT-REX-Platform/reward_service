@@ -17,26 +17,23 @@ class GrowthScoreCalculatorTest {
     @Test
     void testGrowthScoreCalculation() {
         //arrange
-        UUID courseId = UUID.randomUUID();
+        final UUID courseId = UUID.randomUUID();
 
-        UUID userId = UUID.randomUUID();
+        final UUID userId = UUID.randomUUID();
 
-        AllRewardScoresEntity allRewardScores = dummyAllRewardScoresBuilder(courseId, userId).build();
+        final AllRewardScoresEntity allRewardScores = dummyAllRewardScoresBuilder(courseId, userId).build();
 
-        Content content1 = dummyContent(10, true);
-        Content content2 = dummyContent(10, false);
-        Content content3 = dummyContent(20, true);
+        final Content content1 = dummyContent(10, true);
+        final Content content2 = dummyContent(10, false);
+        final Content content3 = dummyContent(20, true);
 
-
-        List<Content> contentList = new ArrayList<>();
-        contentList.add(content1);
-        contentList.add(content2);
-        contentList.add(content3);
-        UserProgressLogEvent progressLogEvent1 = UserProgressLogEvent.builder().contentId(content1.getId()).build();
+        final List<Content> contentList = List.of(content1, content2, content3);
+        final UserProgressLogEvent progressLogEvent1 = UserProgressLogEvent.builder()
+                .contentId(content1.getId())
+                .build();
 
         //act
-        RewardScoreEntity rewardScore = growthScoreCalculator.calculateOnContentWorkedOn(allRewardScores, contentList, progressLogEvent1);
-
+        final RewardScoreEntity rewardScore = growthScoreCalculator.calculateOnContentWorkedOn(allRewardScores, contentList, progressLogEvent1);
 
         //assert
         Assertions.assertEquals(0.75f, rewardScore.getPercentage(), 0.0f);
@@ -44,7 +41,7 @@ class GrowthScoreCalculatorTest {
 
     }
 
-    private static AllRewardScoresEntity.AllRewardScoresEntityBuilder dummyAllRewardScoresBuilder(UUID courseId, UUID userId) {
+    private static AllRewardScoresEntity.AllRewardScoresEntityBuilder dummyAllRewardScoresBuilder(final UUID courseId, final UUID userId) {
         return AllRewardScoresEntity.builder()
                 .id(new AllRewardScoresEntity.PrimaryKey(courseId, userId))
                 .health(initializeRewardScoreEntity(100))
@@ -55,16 +52,16 @@ class GrowthScoreCalculatorTest {
 
     }
 
-    private static Content dummyContent(int rewardPoints, boolean success) {
-        ContentMetadata metadata = ContentMetadata.builder().setRewardPoints(rewardPoints).build();
-        ProgressLogItem progressLogItem = ProgressLogItem.builder().setSuccess(success).build();
-        UserProgressData progressData = UserProgressData.builder().setLog(List.of(progressLogItem)).build();
+    private static Content dummyContent(final int rewardPoints, final boolean success) {
+        final ContentMetadata metadata = ContentMetadata.builder().setRewardPoints(rewardPoints).build();
+        final ProgressLogItem progressLogItem = ProgressLogItem.builder().setSuccess(success).build();
+        final UserProgressData progressData = UserProgressData.builder().setLog(List.of(progressLogItem)).build();
 
         return MediaContent.builder().setId(UUID.randomUUID()).setMetadata(metadata).setUserProgressData(progressData).build();
     }
 
-    private static RewardScoreEntity initializeRewardScoreEntity(int initialValue) {
-        RewardScoreEntity rewardScoreEntity = new RewardScoreEntity();
+    private static RewardScoreEntity initializeRewardScoreEntity(final int initialValue) {
+        final RewardScoreEntity rewardScoreEntity = new RewardScoreEntity();
         rewardScoreEntity.setValue(initialValue);
         rewardScoreEntity.setLog(new ArrayList<>());
         return rewardScoreEntity;

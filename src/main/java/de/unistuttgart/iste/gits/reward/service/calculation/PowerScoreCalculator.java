@@ -17,47 +17,60 @@ import java.util.List;
 @Component
 public class PowerScoreCalculator implements ScoreCalculator {
 
+    /**
+     * The multiplier for the health and fitness score.
+     * This controls how much the health and fitness score influence the power score.
+     * By default, the health and fitness score can increase the power score by up to 10%.
+     */
     public static final double HEALTH_FITNESS_MULTIPLIER = 0.1;
 
     @Override
-    public RewardScoreEntity recalculateScore(AllRewardScoresEntity allRewardScores, List<Content> contents) {
+    public RewardScoreEntity recalculateScore(final AllRewardScoresEntity allRewardScores,
+                                              final List<Content> contents) {
         return calculatePowerScore(allRewardScores);
     }
 
     @Override
-    public RewardScoreEntity calculateOnContentWorkedOn(AllRewardScoresEntity allRewardScores, List<Content> contents, UserProgressLogEvent event) {
+    public RewardScoreEntity calculateOnContentWorkedOn(final AllRewardScoresEntity allRewardScores,
+                                                        final List<Content> contents,
+                                                        final UserProgressLogEvent event) {
         return calculatePowerScore(allRewardScores);
     }
 
-    private RewardScoreEntity calculatePowerScore(AllRewardScoresEntity allRewardScores) {
-        int growth = allRewardScores.getGrowth().getValue();
-        int strength = allRewardScores.getStrength().getValue();
-        int health = allRewardScores.getHealth().getValue();
-        int fitness = allRewardScores.getFitness().getValue();
-        int power = allRewardScores.getPower().getValue();
+    private RewardScoreEntity calculatePowerScore(final AllRewardScoresEntity allRewardScores) {
+        final int growth = allRewardScores.getGrowth().getValue();
+        final int strength = allRewardScores.getStrength().getValue();
+        final int health = allRewardScores.getHealth().getValue();
+        final int fitness = allRewardScores.getFitness().getValue();
+        final int oldPower = allRewardScores.getPower().getValue();
 
-        double powerValue = (growth + strength) + HEALTH_FITNESS_MULTIPLIER * 0.01 * (health + fitness) * (growth + strength);
-        int powerRounded = (int) Math.round(powerValue);
+        final double powerValue = (growth + strength)
+                                  + PowerScoreCalculator.HEALTH_FITNESS_MULTIPLIER * 0.01 * (health + fitness) * (growth + strength);
+        final int newPower = (int) Math.round(powerValue);
 
-        int difference = powerRounded - power;
+        final int difference = newPower - oldPower;
         if (difference == 0) {
             // no change in power score, so no log entry is created
             return allRewardScores.getPower();
         }
 
-        RewardScoreLogEntry logEntry = RewardScoreLogEntry.builder()
-                .date(OffsetDateTime.now())
-                .difference(difference)
-                .oldValue(power)
-                .newValue(powerRounded)
-                .reason(RewardChangeReason.COMPOSITE_VALUE)
-                .associatedContentIds(Collections.emptyList())
-                .build();
+        final RewardScoreLogEntry logEntry = createLogEntry(oldPower, newPower);
 
-        RewardScoreEntity powerEntity = allRewardScores.getPower();
-        powerEntity.setValue(powerRounded);
+        final RewardScoreEntity powerEntity = allRewardScores.getPower();
+        powerEntity.setValue(newPower);
         powerEntity.getLog().add(logEntry);
 
         return powerEntity;
+    }
+
+    private static RewardScoreLogEntry createLogEntry(final int oldPower, final int newPower) {
+        return RewardScoreLogEntry.builder()
+                .date(OffsetDateTime.now())
+                .difference(newPower - oldPower)
+                .oldValue(oldPower)
+                .newValue(newPower)
+                .reason(RewardChangeReason.COMPOSITE_VALUE)
+                .associatedContentIds(Collections.emptyList())
+                .build();
     }
 }
