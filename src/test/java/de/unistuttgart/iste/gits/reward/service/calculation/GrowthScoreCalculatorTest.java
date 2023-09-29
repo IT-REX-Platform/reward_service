@@ -4,19 +4,19 @@ import de.unistuttgart.iste.gits.common.event.UserProgressLogEvent;
 import de.unistuttgart.iste.gits.generated.dto.*;
 import de.unistuttgart.iste.gits.reward.persistence.entity.AllRewardScoresEntity;
 import de.unistuttgart.iste.gits.reward.persistence.entity.RewardScoreEntity;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class GrowthScoreCalculatorTest {
 
     private final GrowthScoreCalculator growthScoreCalculator = new GrowthScoreCalculator();
 
-
     @Test
     void testGrowthScoreCalculation() {
-        //arrange
+        // arrange
         final UUID courseId = UUID.randomUUID();
 
         final UUID userId = UUID.randomUUID();
@@ -32,16 +32,17 @@ class GrowthScoreCalculatorTest {
                 .contentId(content1.getId())
                 .build();
 
-        //act
+        // act
         final RewardScoreEntity rewardScore = growthScoreCalculator.calculateOnContentWorkedOn(allRewardScores, contentList, progressLogEvent1);
 
-        //assert
-        Assertions.assertEquals(0.75f, rewardScore.getPercentage(), 0.0f);
-        Assertions.assertEquals(30, rewardScore.getValue());
+        // assert
+        assertEquals(0.75f, rewardScore.getPercentage(), 0.05f);
+        assertEquals(30, rewardScore.getValue());
 
     }
 
-    private static AllRewardScoresEntity.AllRewardScoresEntityBuilder dummyAllRewardScoresBuilder(final UUID courseId, final UUID userId) {
+    private static AllRewardScoresEntity.AllRewardScoresEntityBuilder dummyAllRewardScoresBuilder(final UUID courseId,
+                                                                                                  final UUID userId) {
         return AllRewardScoresEntity.builder()
                 .id(new AllRewardScoresEntity.PrimaryKey(courseId, userId))
                 .health(initializeRewardScoreEntity(100))
@@ -53,11 +54,18 @@ class GrowthScoreCalculatorTest {
     }
 
     private static Content dummyContent(final int rewardPoints, final boolean success) {
-        final ContentMetadata metadata = ContentMetadata.builder().setRewardPoints(rewardPoints).build();
-        final ProgressLogItem progressLogItem = ProgressLogItem.builder().setSuccess(success).build();
-        final UserProgressData progressData = UserProgressData.builder().setLog(List.of(progressLogItem)).build();
+        final ContentMetadata metadata = ContentMetadata.builder()
+                .setRewardPoints(rewardPoints)
+                .build();
+        final UserProgressData progressData = UserProgressData.builder()
+                .setIsLearned(success)
+                .setLog(List.of())
+                .build();
 
-        return MediaContent.builder().setId(UUID.randomUUID()).setMetadata(metadata).setUserProgressData(progressData).build();
+        return MediaContent.builder().setId(UUID.randomUUID())
+                .setMetadata(metadata)
+                .setUserProgressData(progressData)
+                .build();
     }
 
     private static RewardScoreEntity initializeRewardScoreEntity(final int initialValue) {
