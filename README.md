@@ -53,8 +53,6 @@ The GraphQL API is described in the [api.md file](api.md).
 
 The endpoint for the GraphQL API is `/graphql`. The GraphQL Playground is available at `/graphiql`.
 
-## How to run
-
 ## Get started
 
 A guide how to start development can be
