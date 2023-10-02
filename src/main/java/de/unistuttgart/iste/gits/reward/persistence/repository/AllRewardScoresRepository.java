@@ -11,7 +11,7 @@ import java.util.UUID;
 public interface AllRewardScoresRepository extends JpaRepository<AllRewardScoresEntity, AllRewardScoresEntity.PrimaryKey> {
 
     /**
-     * Find all reward scores entities by id course id.
+     * Find all reward scores entities by course id.
      *
      * @param id_courseId the course id
      * @return the list of all reward scores entities that have the given course id
