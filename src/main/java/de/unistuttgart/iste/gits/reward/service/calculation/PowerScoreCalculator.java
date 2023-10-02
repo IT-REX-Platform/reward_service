@@ -69,20 +69,24 @@ public class PowerScoreCalculator implements ScoreCalculator {
         final int fitness = allRewardScores.getFitness().getValue();
         final int oldPower = allRewardScores.getPower().getValue();
 
-        final double powerValue = (growth + strength)
-                                  + healthFitnessMultiplier * 0.01 * (health + fitness) * (growth + strength);
-        final int newPower = (int) Math.round(powerValue);
+        // health and fitness are between 0 and 100,
+        // so we divide by 100 to get a value between 0 and 1
+        // (or here between 0 and 2, because we sum health and fitness)
+        final double healthFitnessFactor = 0.01 * (health + fitness);
 
-        final int difference = newPower - oldPower;
+        final double powerValue = (growth + strength) + healthFitnessMultiplier * healthFitnessFactor;
+        final int powerRounded = (int) Math.round(powerValue);
+
+        final int difference = powerRounded - oldPower;
         if (difference == 0) {
             // no change in power score, so no log entry is created
             return allRewardScores.getPower();
         }
 
-        final RewardScoreLogEntry logEntry = createLogEntry(oldPower, newPower);
+        final RewardScoreLogEntry logEntry = createLogEntry(oldPower, powerRounded);
 
         final RewardScoreEntity powerEntity = allRewardScores.getPower();
-        powerEntity.setValue(newPower);
+        powerEntity.setValue(powerRounded);
         powerEntity.getLog().add(logEntry);
 
         return powerEntity;
