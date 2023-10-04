@@ -31,7 +31,7 @@ public class RewardController {
 
     @QueryMapping
     public RewardScores courseRewardScoresForUser(@Argument final UUID courseId, @Argument final UUID userId, @ContextValue final LoggedInUser currentUser) {
-        UserCourseAccessValidator.validateUserHasAccessToCourse(currentUser, LoggedInUser.UserRoleInCourse.STUDENT, courseId);
+        UserCourseAccessValidator.validateUserHasAccessToCourse(currentUser, LoggedInUser.UserRoleInCourse.ADMINISTRATOR, courseId);
         return rewardService.getRewardScores(courseId, userId);
     }
 
