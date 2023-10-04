@@ -74,7 +74,7 @@ public class PowerScoreCalculator implements ScoreCalculator {
         // (or here between 0 and 2, because we sum health and fitness)
         final double healthFitnessFactor = 0.01 * (health + fitness);
 
-        final double powerValue = (growth + strength) + healthFitnessMultiplier * healthFitnessFactor;
+        final double powerValue = (growth + strength) * (1 + healthFitnessMultiplier * healthFitnessFactor);
         final int powerRounded = (int) Math.round(powerValue);
 
         final int difference = powerRounded - oldPower;
