@@ -40,8 +40,8 @@ public class SubscriptionController {
      *
      * @param cloudEvent the cloud event
      */
-    @Topic(name = "course-changes", pubsubName = "gits")
-    @PostMapping(path = "/reward-service/course-changes-pubsub")
+    @Topic(name = "course-changed", pubsubName = "gits")
+    @PostMapping(path = "/reward-service/course-changed-pubsub")
     public Mono<Void> updateAssociation(@RequestBody final CloudEvent<CourseChangeEvent> cloudEvent) {
 
         return Mono.fromRunnable(
