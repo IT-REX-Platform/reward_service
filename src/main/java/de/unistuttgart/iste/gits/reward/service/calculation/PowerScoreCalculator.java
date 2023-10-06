@@ -52,6 +52,8 @@ public class PowerScoreCalculator implements ScoreCalculator {
     @Override
     public RewardScoreEntity recalculateScore(final AllRewardScoresEntity allRewardScores,
                                               final List<Content> contents) {
+        log.debug("Recalculating power score for user {} in course {}",
+                allRewardScores.getId().getUserId(), allRewardScores.getId().getCourseId());
         return calculatePowerScore(allRewardScores);
     }
 
@@ -59,6 +61,8 @@ public class PowerScoreCalculator implements ScoreCalculator {
     public RewardScoreEntity calculateOnContentWorkedOn(final AllRewardScoresEntity allRewardScores,
                                                         final List<Content> contents,
                                                         final UserProgressUpdatedEvent event) {
+        log.debug("Calculating power score for user {} in course {}",
+                allRewardScores.getId().getUserId(), allRewardScores.getId().getCourseId());
         return calculatePowerScore(allRewardScores);
     }
 
@@ -68,6 +72,7 @@ public class PowerScoreCalculator implements ScoreCalculator {
         final int health = allRewardScores.getHealth().getValue();
         final int fitness = allRewardScores.getFitness().getValue();
         final int oldPower = allRewardScores.getPower().getValue();
+        log.debug("Old power score: {}", oldPower);
 
         // health and fitness are between 0 and 100,
         // so we divide by 100 to get a value between 0 and 1
@@ -76,6 +81,8 @@ public class PowerScoreCalculator implements ScoreCalculator {
 
         final double powerValue = (growth + strength) * (1 + healthFitnessMultiplier * healthFitnessFactor);
         final int powerRounded = (int) Math.round(powerValue);
+
+        log.debug("New power score: {}", powerRounded);
 
         final int difference = powerRounded - oldPower;
         if (difference == 0) {
