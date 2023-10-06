@@ -56,8 +56,7 @@ public class FitnessScoreCalculator implements ScoreCalculator {
 
     @Override
     public RewardScoreEntity recalculateScore(final AllRewardScoresEntity allRewardScores, final List<Content> contents) {
-        log.debug("Recalculating fitness score for user {} in course {}",
-                allRewardScores.getId().getUserId(), allRewardScores.getId().getCourseId());
+        log.debug("Recalculating fitness score");
 
         final RewardScoreEntity fitnessEntity = allRewardScores.getFitness();
         final int oldScore = fitnessEntity.getValue();
@@ -85,8 +84,7 @@ public class FitnessScoreCalculator implements ScoreCalculator {
     public RewardScoreEntity calculateOnContentWorkedOn(final AllRewardScoresEntity allRewardScores,
                                                         final List<Content> contents,
                                                         final UserProgressUpdatedEvent event) {
-        log.debug("Calculating fitness score for user {} in course {}",
-                allRewardScores.getId().getUserId(), allRewardScores.getId().getCourseId());
+        log.debug("Calculating fitness score");
 
         final RewardScoreEntity fitnessEntity = allRewardScores.getFitness();
         final int oldScore = fitnessEntity.getValue();

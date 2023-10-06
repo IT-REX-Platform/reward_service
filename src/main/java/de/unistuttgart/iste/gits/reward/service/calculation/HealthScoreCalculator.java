@@ -66,8 +66,7 @@ public class HealthScoreCalculator implements ScoreCalculator {
     @Override
     public RewardScoreEntity recalculateScore(final AllRewardScoresEntity allRewardScores,
                                               final List<Content> contents) {
-        log.debug("Recalculating health score for user {} in course {}",
-                allRewardScores.getId().getUserId(), allRewardScores.getId().getCourseId());
+        log.debug("Recalculating health score");
 
         final RewardScoreEntity healthEntity = allRewardScores.getHealth();
         final int oldScore = healthEntity.getValue();
@@ -100,8 +99,7 @@ public class HealthScoreCalculator implements ScoreCalculator {
             final AllRewardScoresEntity allRewardScoresEntity,
             final List<Content> contents,
             final UserProgressUpdatedEvent event) {
-        log.debug("Calculating health score for user {} in course {}",
-                allRewardScoresEntity.getId().getUserId(), allRewardScoresEntity.getId().getCourseId());
+        log.debug("Calculating health score");
         log.debug("Content worked on: {}", event.getContentId());
         log.debug("Content list: {}", contents);
 

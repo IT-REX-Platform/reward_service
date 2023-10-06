@@ -52,8 +52,6 @@ public class PowerScoreCalculator implements ScoreCalculator {
     @Override
     public RewardScoreEntity recalculateScore(final AllRewardScoresEntity allRewardScores,
                                               final List<Content> contents) {
-        log.debug("Recalculating power score for user {} in course {}",
-                allRewardScores.getId().getUserId(), allRewardScores.getId().getCourseId());
         return calculatePowerScore(allRewardScores);
     }
 
@@ -61,12 +59,11 @@ public class PowerScoreCalculator implements ScoreCalculator {
     public RewardScoreEntity calculateOnContentWorkedOn(final AllRewardScoresEntity allRewardScores,
                                                         final List<Content> contents,
                                                         final UserProgressUpdatedEvent event) {
-        log.debug("Calculating power score for user {} in course {}",
-                allRewardScores.getId().getUserId(), allRewardScores.getId().getCourseId());
         return calculatePowerScore(allRewardScores);
     }
 
     private RewardScoreEntity calculatePowerScore(final AllRewardScoresEntity allRewardScores) {
+        log.debug("Calculating power score");
         final int growth = allRewardScores.getGrowth().getValue();
         final int strength = allRewardScores.getStrength().getValue();
         final int health = allRewardScores.getHealth().getValue();
